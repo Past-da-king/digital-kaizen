@@ -156,6 +156,9 @@ tbody tr:hover{background:var(--panel2)}
 .rung{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line);margin-left:4px}
 .rung.on{background:var(--red)}
 
+/* Both of these are filled in by script; until then they take no room. */
+.demo:empty,.filter:empty{display:none}
+
 /* ---- demo bar ----------------------------------------------- */
 .demo{
   display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px;

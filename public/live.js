@@ -33,9 +33,9 @@ function card(m) {
     <div class="bd">
       <div class="stats">
         <div class="stat big"><div class="k">Shots today</div><div class="v" data-r="shots">0</div></div>
-        <div class="stat"><div class="k">Last cycle</div><div class="v" data-r="cycle">—<span class="u">s</span></div></div>
-        <div class="stat"><div class="k">Average cycle</div><div class="v" data-r="avg">—<span class="u">s</span></div></div>
-        <div class="stat"><div class="k">Availability</div><div class="v" data-r="avail">—<span class="u">%</span></div></div>
+        <div class="stat"><div class="k">Last cycle</div><div class="v" data-r="cycle">—</div></div>
+        <div class="stat"><div class="k">Average cycle</div><div class="v" data-r="avg">—</div></div>
+        <div class="stat"><div class="k">Availability</div><div class="v" data-r="avail">—</div></div>
       </div>
 
       <div class="dt" data-r="dt">
@@ -55,10 +55,10 @@ function card(m) {
       </div>
 
       <p class="sect">Last 60 cycles</p>
-      <svg class="spark" data-r="spark"></svg>
+      <svg class="spark" data-r="spark" style="height:22px"></svg>
 
       <p class="sect" style="margin-top:18px">Shots per hour today</p>
-      <svg class="bars" data-r="bars"></svg>
+      <svg class="bars" data-r="bars" style="height:22px"></svg>
 
       <div class="shifts">
         <div class="shift"><div class="n">Shift A, 06:00 to 18:00</div>
