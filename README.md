@@ -74,7 +74,7 @@ npm install --omit=dev
 **Linux:**
 
 ```bash
-sudo mkdir -p /opt/digital-kaizen && sudo chown $USER /opt/digital-kaizen
+sudo mkdir -p /opt/digital-kaizen && sudo chown $(whoami) /opt/digital-kaizen
 git clone https://github.com/Past-da-king/digital-kaizen.git /opt/digital-kaizen
 cd /opt/digital-kaizen
 npm install --omit=dev
@@ -184,7 +184,7 @@ cd /opt/digital-kaizen
 sudo bash deploy/install-linux-service.sh
 ```
 
-This creates a service called `digital-kaizen`. See the log with `journalctl -u digital-kaizen -f`.
+This creates a service called `digital-kaizen`. See the log with `sudo journalctl -u digital-kaizen -f`.
 
 Open http://192.120.0.7:4310 again to confirm it is running, then restart the server once to prove it comes back by itself.
 

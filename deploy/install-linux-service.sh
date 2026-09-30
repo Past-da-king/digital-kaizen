@@ -18,4 +18,4 @@ systemctl enable --now digital-kaizen.service
 sleep 3
 systemctl --no-pager --lines=15 status digital-kaizen.service || true
 echo
-echo "Installed. Logs:  journalctl -u digital-kaizen -f"
+echo "Installed. Logs:  sudo journalctl -u digital-kaizen -f"
