@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen — Sign in</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  body{display:grid;place-items:center;min-height:100dvh;padding:20px}
+  .box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);
+       border-radius:16px;padding:30px 26px;text-align:center}
+  .box .brand{font-size:13px;margin-bottom:20px}
+  .box h1{font-size:19px;margin:0 0 4px}
+  .box p{color:var(--dim);font-size:13px;margin:0 0 20px;line-height:1.6}
+  .box input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    padding:13px 14px;border-radius:10px;font:inherit;font-size:16px;text-align:center;letter-spacing:.04em}
+  .box button{width:100%;margin-top:12px;padding:13px;font-size:15px;border-radius:10px}
+  .err{color:var(--amber);font-size:13px;margin-top:12px;min-height:18px}
+</style>
+</head><body>
+<form class="box" id="f">
+  <div class="brand">Digital <span style="color:var(--accent)">Kaizen</span></div>
+  <h1>Sign in</h1>
+  <p>Production monitoring for the moulding floor.</p>
+  <input type="password" id="pw" placeholder="Password" autocomplete="current-password" autofocus>
+  <button type="submit">Sign in</button>
+  <div class="err" id="err"></div>
+</form>
+<script type="module">
+  const f = document.getElementById('f');
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('err');
+    err.textContent = '';
+    try {
+      const r = await fetch('/api/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('pw').value }),
+      }).then(r => r.json());
+      if (r.ok) location.href = '/';
+      else err.textContent = r.error || 'Wrong password';
+    } catch { err.textContent = 'Could not reach the server'; }
+  };
+</script>
+</body></html>

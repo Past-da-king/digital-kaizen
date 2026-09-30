@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen — Downtime & Alerts</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .lvl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-family:system-ui}
+  .lvl.event,.lvl.screen{background:rgba(77,163,255,.15);color:var(--accent)}
+  .lvl.operator{background:rgba(255,176,32,.15);color:var(--amber)}
+  .lvl.supervisor{background:rgba(255,140,60,.16);color:#ff8c3c}
+  .lvl.manager,.lvl.critical{background:rgba(255,77,79,.16);color:var(--red)}
+  .lvl.recovered{background:rgba(61,220,132,.15);color:var(--green)}
+  .lvl.OPEN{background:rgba(255,77,79,.16);color:var(--red)}
+  .lvl.CLOSED{background:rgba(84,96,122,.2);color:var(--grey)}
+  .un{color:var(--amber)}
+  .msg{white-space:pre-wrap;font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:1.5}
+  .chan{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12.5px}
+  .chip b{color:var(--ink)}
+  .chip.off{color:var(--dim)}
+</style>
+</head><body>
+<header class="top">
+  <div class="brand">Digital <span>Kaizen</span></div>
+  <nav><a href="/" class="">Live floor</a><a href="/events.html" class="on">Events</a><a href="/history.html" class="">History</a><a href="/sensors.html" class="">Sensors</a><a href="/qr.html" class="">Labels</a><a href="/about.html" class="">How it works</a></nav>
+</header>
+<main>
+  <div class="filter" id="filter"></div>
+  <div class="chan" id="chan"></div>
+  <div class="grid">
+    <section class="card">
+      <div class="hd"><h2>Downtime events</h2><div class="spacer"></div><span class="part" id="evCount"></span></div>
+      <div class="bd" style="padding:0"><div class="scroll"><table>
+        <thead><tr><th>#</th><th>Machine</th><th>Started</th><th>Duration</th><th>Reason</th><th>Not made</th><th></th></tr></thead>
+        <tbody id="events"></tbody></table></div></div>
+    </section>
+    <section class="card">
+      <div class="hd"><h2>Alerts sent</h2><div class="spacer"></div><span class="part" id="alCount"></span></div>
+      <div class="bd" style="padding:0"><div class="scroll"><table>
+        <thead><tr><th>Time</th><th>Level</th><th>To</th><th>Via</th><th>Delivered</th></tr></thead>
+        <tbody id="alerts"></tbody></table></div></div>
+    </section>
+  </div>
+  <section class="card" style="margin-top:18px">
+    <div class="hd"><h2>Escalation ladder</h2></div>
+    <div class="bd"><table><thead><tr><th>After</th><th>Level</th><th>Who</th><th>Channel</th></tr></thead>
+      <tbody id="ladder"></tbody></table>
+      <p class="note" style="margin-top:14px">Each rung fires <b>once per event</b>. A machine down for an hour
+      produces five messages, not a hundred and twenty — and one recovery message when it restarts,
+      carrying the total downtime and the reason the operator gave.</p></div>
+  </section>
+</main>
+<script type="module" src="/events-view.js"></script>
+</body></html>

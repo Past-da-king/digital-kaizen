@@ -1,0 +1,3 @@
+# Stored with Windows line endings on purpose; cmd.exe misreads LF-only batch files.
+*.cmd -text
+*.sh text eol=lf

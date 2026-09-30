@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen — How it works</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  main{max-width:1000px}
+
+  .hero{padding:44px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+  .hero .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .hero h1{font-size:38px;line-height:1.15;margin:12px 0 14px;letter-spacing:-.02em;max-width:16ch}
+  .hero p{font-size:16.5px;line-height:1.7;color:#b9c3d6;max-width:62ch;margin:0}
+  .hero p b{color:var(--ink);font-weight:600}
+  @media(max-width:720px){ .hero h1{font-size:27px} .hero{padding:26px 0 20px;margin-bottom:26px} }
+
+  section.blk{margin-bottom:46px}
+  section.blk > h2{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+    margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);font-weight:700;
+  }
+
+  /* the chain */
+  .chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
+  .link{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px 16px;position:relative}
+  .link .n{font-size:10px;letter-spacing:.1em;color:var(--accent);font-weight:700}
+  .link b{display:block;font-size:15.5px;margin:7px 0 6px}
+  .link span{font-size:13px;color:var(--dim);line-height:1.6}
+
+  /* three-up cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .c{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px}
+  .c .ico{font-size:22px;line-height:1}
+  .c h3{margin:12px 0 8px;font-size:16px}
+  .c p{margin:0;font-size:13.5px;line-height:1.7;color:#b9c3d6}
+
+  /* the stop scale */
+  .scale{display:grid;gap:10px}
+  .row{display:grid;grid-template-columns:112px 1fr;gap:16px;align-items:start;
+       background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:11px;padding:15px 17px}
+  .row.g{border-left-color:var(--green)} .row.a{border-left-color:var(--amber)} .row.r{border-left-color:var(--red)}
+  .row .t{font-family:var(--mono);font-size:14px;font-weight:600}
+  .row.g .t{color:var(--green)} .row.a .t{color:var(--amber)} .row.r .t{color:var(--red)}
+  .row b{display:block;font-size:14.5px;margin-bottom:4px}
+  .row span{font-size:13.5px;color:var(--dim);line-height:1.65}
+
+  /* numbered steps */
+  .steps{counter-reset:s;display:grid;gap:12px}
+  .step{display:grid;grid-template-columns:34px 1fr;gap:15px;align-items:start;
+        background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+  .step::before{
+    counter-increment:s;content:counter(s);
+    width:28px;height:28px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--accent);
+  }
+  .step b{display:block;font-size:15px;margin-bottom:4px}
+  .step span{font-size:13.5px;color:#b9c3d6;line-height:1.7}
+
+  /* answers */
+  .qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .q{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 15px;font-size:14px}
+  .q b{display:block;font-size:12.5px;color:var(--dim);font-weight:600;margin-bottom:5px}
+
+  .pull{border-left:3px solid var(--accent);background:rgba(77,163,255,.06);
+        border-radius:0 11px 11px 0;padding:18px 22px;margin:26px 0}
+  .pull p{margin:0;font-size:16px;line-height:1.65;color:var(--ink)}
+
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden}
+  summary{padding:16px 20px;cursor:pointer;font-size:14px;font-weight:600;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:'▸ ';color:var(--dim)}
+  details[open] summary::before{content:'▾ '}
+  details .inner{padding:0 20px 20px;border-top:1px solid var(--line);margin-top:0;padding-top:18px}
+  details p,details li{font-size:13.5px;line-height:1.75;color:#b9c3d6}
+  details code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:12.5px;color:var(--ink)}
+  details table{margin:12px 0;font-size:13px}
+</style>
+</head><body>
+<header class="top">
+  <div class="brand">Digital <span>Kaizen</span></div>
+  <nav><a href="/">Live floor</a><a href="/events.html">Events</a><a href="/history.html">History</a><a href="/sensors.html">Sensors</a><a href="/qr.html">Labels</a><a href="/about.html" class="on">How it works</a></nav>
+</header>
+<main>
+
+  <div class="hero">
+    <div class="eyebrow">How it works</div>
+    <h1>Every machine. Every shot. Every stop.</h1>
+    <p>A small laser watches each moulding machine and counts what it makes — automatically, all day,
+    all night. When a machine stops, the system notices, times it, and asks the operator why.
+    <b>No clipboards, no guessing, and nothing wired into the machine.</b></p>
+  </div>
+
+  <section class="blk">
+    <h2>The problem it solves</h2>
+    <div class="pull">
+      <p>Nobody can say exactly how much a machine actually ran yesterday — or where the lost hours went.
+      By the time it shows up in the month-end numbers, the reason has been forgotten.</p>
+    </div>
+    <div class="cards">
+      <div class="c"><div class="ico">📋</div><h3>Counted by hand</h3>
+        <p>Someone writes production on a sheet, at the end of a shift, from memory. Nobody blames them —
+        it's the only tool they've been given.</p></div>
+      <div class="c"><div class="ico">🕳️</div><h3>Stops vanish</h3>
+        <p>A machine sits dead for forty minutes at 2am. Nothing records it, so it never happened,
+        so it happens again next week.</p></div>
+      <div class="c"><div class="ico">🤷</div><h3>No "why"</h3>
+        <p>Even when downtime is known, the reason isn't. You can't fix a problem you can't name.</p></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>What happens, end to end</h2>
+    <div class="chain">
+      <div class="link"><div class="n">01</div><b>A laser</b><span>Watches the mould move. Measures distance ten times a second.</span></div>
+      <div class="link"><div class="n">02</div><b>A small sensor</b><span>Works out what that movement means: a part made, a slow cycle, a stop.</span></div>
+      <div class="link"><div class="n">03</div><b>The factory wifi</b><span>Sends it on. No cables to run, no changes to the machine.</span></div>
+      <div class="link"><div class="n">04</div><b>A server</b><span>Stores every shot with the time it happened. Nothing is lost.</span></div>
+      <div class="link"><div class="n">05</div><b>This dashboard</b><span>Live on the floor, on a phone, anywhere.</span></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>How a laser counts production</h2>
+    <p class="note" style="margin:0 0 16px;max-width:66ch">A moulding machine squeezes a mould shut, fills it,
+    cools it, then opens and drops the part out. Over and over. That movement is the only thing the
+    sensor needs to see.</p>
+    <div class="cards">
+      <div class="c"><div class="ico">📏</div><h3>It learns the machine</h3>
+        <p>On power-up it watches the mould move back and forth a few times and works out the machine's
+        own range of travel. Nobody configures anything.</p></div>
+      <div class="c"><div class="ico">🔁</div><h3>Shut → open → shut</h3>
+        <p>That's one part made. The time between two of them is the cycle time — and if that starts
+        creeping up, the machine is struggling.</p></div>
+      <div class="c"><div class="ico">⏱️</div><h3>Nothing moving</h3>
+        <p>No movement for a few minutes means the machine has stopped, and the clock starts running.</p></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>Not every pause is downtime</h2>
+    <p class="note" style="margin:0 0 16px;max-width:66ch">Calling every eight-second hiccup "downtime"
+    produces numbers nobody trusts. So a stop is graded by how long it lasts, and each machine has its
+    own thresholds — a twelve-second cycle and a forty-five-second cycle do not mean the same thing by "stopped".</p>
+    <div class="scale">
+      <div class="row g"><div class="t">under a minute</div>
+        <div><b>Micro-stop</b><span>Recorded quietly, never called downtime. But twenty of them in a shift
+        is a pattern worth finding — that's where the easy wins hide.</span></div></div>
+      <div class="row a"><div class="t">past the limit</div>
+        <div><b>Downtime event</b><span>A real event with a number and a running clock. The operator is
+        asked why. This is what appears on the report.</span></div></div>
+      <div class="row r"><div class="t">longer still</div>
+        <div><b>Escalated</b><span>Supervisor, then operations manager, then plant management —
+        one message each, not one every thirty seconds.</span></div></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>The part only a person can answer</h2>
+    <p class="note" style="margin:0 0 16px;max-width:66ch">The sensor knows a machine stopped and for how
+    long. It has <b>no idea why</b>. Only the person standing there knows that — so it asks them, in the
+    simplest way that will actually get used.</p>
+    <div class="steps">
+      <div class="step"><div><b>A printed code on the machine</b>
+        <span>Laminated, cable-tied where the operator stands. That's the entire installation.</span></div></div>
+      <div class="step"><div><b>They scan it with their own phone</b>
+        <span>No app to install, no login, no training. It opens straight to that machine.</span></div></div>
+      <div class="step"><div><b>One tap</b>
+        <span>Material issue · Machine fault · Scheduled or unscheduled mould change · Maintenance · Order complete.
+        Done in three seconds, with oily hands.</span></div></div>
+      <div class="step"><div><b>The reason sticks to the event</b>
+        <span>From then on the report doesn't say "41 minutes lost". It says <b>"41 minutes lost to material shortage"</b>.</span></div></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>What you can actually ask it</h2>
+    <div class="qs">
+      <div class="q"><b>Output</b>How many parts did MA1 make last night?</div>
+      <div class="q"><b>Speed</b>Is the cycle time creeping up on that mould?</div>
+      <div class="q"><b>Uptime</b>What percentage of the shift did it actually run?</div>
+      <div class="q"><b>Loss</b>How many units did we not make while it was down?</div>
+      <div class="q"><b>Cause</b>What stopped us most this month?</div>
+      <div class="q"><b>Shifts</b>Does night shift run differently to day?</div>
+      <div class="q"><b>Patterns</b>Which machine micro-stops the most?</div>
+      <div class="q"><b>Response</b>How long before somebody reacted?</div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>Why it can go on any machine</h2>
+    <div class="cards">
+      <div class="c"><div class="ico">🔌</div><h3>Nothing wired in</h3>
+        <p>The laser doesn't touch the machine and doesn't need its permission. No electrician,
+        no PLC access, no warranty argument.</p></div>
+      <div class="c"><div class="ico">🏭</div><h3>Any age, any brand</h3>
+        <p>If the mould moves, it can be counted. A machine from 1995 works exactly as well as one from
+        last year.</p></div>
+      <div class="c"><div class="ico">➕</div><h3>One at a time</h3>
+        <p>Start with one machine. Add the next whenever you like — nothing has to be rebuilt to make room.</p></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>Under the bonnet</h2>
+    <details>
+      <summary>Technical notes — for whoever maintains this</summary>
+      <div class="inner">
+        <p><b>The chain.</b> An M5Stack AtomS3 with a time-of-flight laser measures platen distance at
+        10&nbsp;Hz. It learns the stroke (five direction changes, minimum 200&nbsp;mm of travel), sets
+        closed and open thresholds at 35% and 55% of that stroke, and counts one shot per
+        CLOSED&nbsp;→&nbsp;OPEN&nbsp;→&nbsp;CLOSED. It publishes JSON twice a second over MQTT.</p>
+
+        <p><b>One firmware for every sensor.</b> A sensor does not know which machine it is on. It reports
+        the MAC address burned into its own chip and is paired to a machine on the Sensors page — so
+        moving one is a dropdown, not a laptop and a USB cable, and the wrong file can never be flashed
+        onto the wrong machine.</p>
+
+        <p><b>Two failures that were found and guarded.</b> The device counts in its own memory, so the
+        network is the weak point. If wifi drops and the machine keeps producing, the missed run is
+        reconstructed on reconnect and logged as reconstructed rather than measured. If the device
+        power-cycles its counter restarts at zero — which naively reads as a part being made, and would
+        close an open downtime event with a false "recovered" while the machine was still standing still.
+        Both are guarded and covered by tests.</p>
+
+        <p><b>One setting to check on the first real machine.</b> The learning routine only counts movement
+        when two consecutive readings differ by more than <code>MOVE_DELTA_MM</code>. The value the program
+        originally shipped with is the only one tested that can fail to arm at all — it works on a desk,
+        where a hand waved past the sensor jumps hundreds of millimetres between readings, but a platen
+        moving smoothly may not. It is now set lower, which armed in every case tested. Confirm on the
+        first machine that the sensor leaves LEARNING within about two minutes.</p>
+
+        <p><b>Numbers that are still estimates.</b> Expected cycle times are provisional until somebody
+        times the machines — they set when a stop counts as downtime and how many units a stop cost.
+        Cavities per mould default to 1, so "units not made" currently under-states rather than invents.</p>
+
+        <p><b>Talking to what already exists.</b> The production table matches the schema the existing
+        Node-RED flows write to, column for column, and the HTTP fallback route is the same path — so
+        an existing flow can be pointed at this without being rewritten.</p>
+      </div>
+    </details>
+  </section>
+
+</main>
+</body></html>

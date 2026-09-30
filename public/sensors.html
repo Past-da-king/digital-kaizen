@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen — Sensors</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .mac{font-family:var(--mono);font-size:13px;letter-spacing:.04em}
+  .new{border-left:3px solid var(--amber);background:rgba(255,176,32,.06)}
+  .slot{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .slot:last-child{border-bottom:0}
+  .slot .who{flex:1;min-width:0}
+  .slot .who b{display:block;font-size:15px}
+  .slot .who span{font-size:12.5px;color:var(--dim)}
+  .slot select{min-width:190px}
+  .none{color:var(--dim);font-style:italic}
+  .pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;
+    box-shadow:0 0 0 3px rgba(61,220,132,.15)}
+</style>
+</head><head></head><body>
+<header class="top">
+  <div class="brand">Digital <span>Kaizen</span></div>
+  <nav><a href="/" class="">Live floor</a><a href="/events.html" class="">Events</a><a href="/history.html" class="">History</a><a href="/sensors.html" class="on">Sensors</a><a href="/qr.html" class="">Labels</a><a href="/about.html" class="">How it works</a></nav>
+</header>
+<main>
+  <p class="note" style="max-width:800px;margin:0 0 18px">
+    Every sensor runs the <b>same firmware</b>. None of them knows which machine it is bolted to —
+    each only reports the MAC address burned into its own chip. You decide here which machine that is.
+    Moving a sensor to a different machine is a dropdown, not a laptop and a USB cable.</p>
+
+  <section class="card" style="margin-bottom:18px">
+    <div class="hd"><h2>New sensors seen</h2><div class="spacer"></div><span class="part" id="newCount"></span></div>
+    <div class="bd" style="padding:0" id="newList"></div>
+  </section>
+
+  <section class="card">
+    <div class="hd"><h2>Machines</h2></div>
+    <div class="bd" style="padding:0" id="machineList"></div>
+  </section>
+</main>
+<script type="module" src="/sensors.js"></script>
+</body></html>

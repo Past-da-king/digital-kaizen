@@ -1,0 +1,26 @@
+{
+  "name": "digital-kaizen",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Digital Kaizen: live shot counting and downtime for injection-moulding machines. ToF sensor -> MQTT -> per-shot database -> dashboard.",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/run.js",
+    "setup": "node --env-file-if-exists=.env scripts/setup.js",
+    "check": "node --env-file-if-exists=.env scripts/check.js",
+    "demo": "node src/run.js",
+    "seed": "node scripts/seed-history.js",
+    "reset": "node --env-file-if-exists=.env scripts/reset-db.js",
+    "test": "node scripts/verify-guards.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.3",
+    "mqtt": "^5.10.1",
+    "nodemailer": "^9.0.5",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "license": "UNLICENSED"
+}
