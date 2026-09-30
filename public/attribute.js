@@ -51,7 +51,7 @@ function render() {
       <div class="timer off"><div class="k">Machine status</div><div class="t">No sensor</div>
         <div class="s">Nothing is reporting from this machine.</div></div>
       <p class="hint">There is no sensor sending readings for
-      <b>${data.machine.name}</b> right now — so we cannot tell whether it is running or stopped,
+      <b>${data.machine.name}</b> right now, so we cannot tell whether it is running or stopped,
       and there is nothing to attribute.<br><br>
       If a sensor has just been fitted, it needs pairing to this machine on the dashboard.</p>`
       : `
@@ -59,7 +59,7 @@ function render() {
       <div class="timer ok"><div class="k">Machine status</div><div class="t">Running</div>
         <div class="s">Nothing to attribute right now.</div></div>
       <p class="hint">Scan this code again when the machine stops and it will
-      ask you why. You can also attribute a stop you missed — it stays here until someone answers it.</p>`;
+      ask you why. You can also attribute a stop you missed, it stays here until someone answers it.</p>`;
     return;
   }
 
@@ -105,14 +105,14 @@ function render() {
       // Factory wifi dropped mid-submit. Say so and let them retry
       // instead of leaving the button disabled reading "Sending…".
       btn.disabled = false;
-      btn.textContent = 'Try again — no connection';
+      btn.textContent = 'Try again, no connection';
       return;
     }
 
     // Only claim it landed if the server says it did.
     if (!r?.ok) {
       btn.disabled = false;
-      btn.textContent = 'Could not save — try again';
+      btn.textContent = 'Could not save, try again';
       const p = document.createElement('p');
       p.className = 'hint';
       p.style.color = '#ffb020';

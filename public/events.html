@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Kaizen — Downtime & Alerts</title>
+<title>Digital Kaizen: Downtime & Alerts</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-  .lvl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-family:system-ui}
+  .lvl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-family:system-ui}
   .lvl.event,.lvl.screen{background:rgba(77,163,255,.15);color:var(--accent)}
   .lvl.operator{background:rgba(255,176,32,.15);color:var(--amber)}
   .lvl.supervisor{background:rgba(255,140,60,.16);color:#ff8c3c}
@@ -46,7 +46,7 @@
     <div class="bd"><table><thead><tr><th>After</th><th>Level</th><th>Who</th><th>Channel</th></tr></thead>
       <tbody id="ladder"></tbody></table>
       <p class="note" style="margin-top:14px">Each rung fires <b>once per event</b>. A machine down for an hour
-      produces five messages, not a hundred and twenty — and one recovery message when it restarts,
+      produces five messages, not a hundred and twenty, and one recovery message when it restarts,
       carrying the total downtime and the reason the operator gave.</p></div>
   </section>
 </main>

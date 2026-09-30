@@ -24,7 +24,7 @@ async function load() {
           </div>
           <select data-assign="${u.device_id}">
             <option value="">Which machine is this?</option>
-            ${cfg.machines.map(m => `<option value="${m.id}">${m.id} — ${m.name}</option>`).join('')}
+            ${cfg.machines.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
           </select>
         </div>`).join('')
     : `<div class="slot"><span class="none">No unpaired sensors. Power one up and it appears here within a few seconds.</span></div>`;
@@ -33,7 +33,7 @@ async function load() {
     <div class="slot">
       <div class="who">
         <b>${m.name}</b>
-        <span>${m.part || ''} · ${m.id}</span>
+        <span>${m.part ? m.part + ', ' : ''}${m.id}</span>
       </div>
       ${m.device
         ? `<span class="mac"><span class="pulse"></span>${m.device}</span>

@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Kaizen — Machine labels</title>
+<title>Digital Kaizen: Machine labels</title>
 <link rel="stylesheet" href="/style.css">
 <style>
   .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
   .label{background:#fff;color:#0b0e13;border-radius:16px;padding:26px 22px;text-align:center}
-  .label .co{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6b7688;font-weight:700}
+  .label .co{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6b7688;font-weight:700}
   .label h2{margin:6px 0 2px;font-size:27px;letter-spacing:-.02em}
   .label .p{color:#6b7688;font-size:12.5px}
   .label img{width:210px;height:210px;margin:16px 0 10px}
@@ -30,7 +30,7 @@
 <main>
   <p class="note noprint" style="margin:0 0 18px;max-width:760px">
     One label per machine. Print, laminate, cable-tie it where the operator stands.
-    Scanning it opens that machine's downtime form on their phone — <b>no app, no login,
+    Scanning it opens that machine's downtime form on their phone, <b>no app, no login,
     no training.</b> If the machine is running it says so; if it is stopped it asks why.</p>
   <div class="sheet" id="sheet"></div>
 </main>
@@ -46,7 +46,7 @@
     warn.className = 'noprint';
     warn.style.cssText = 'background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.4);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13.5px;line-height:1.6';
     warn.innerHTML = `<b>Do not print these yet.</b> You opened this page on
-      <code>${host}</code>, so every code below points at <code>${host}</code> —
+      <code>${host}</code>, so every code below points at <code>${host}</code>,
       which on an operator's phone means the phone itself. Re-open this page using
       this computer's network address (for example <code>http://192.168.1.33:${location.port}/qr.html</code>)
       and the codes will be correct.`;
@@ -56,7 +56,7 @@
     <div class="label">
       <div class="co">Digital Kaizen</div>
       <h2>${m.name}</h2>
-      <div class="p">${m.part || ''} &middot; ${m.id}</div>
+      <div class="p">${m.part ? m.part + ', ' : ''}${m.id}</div>
       <img src="/api/qr?m=${m.id}" alt="QR code for ${m.id}">
       <p class="ask">Machine stopped?</p>
       <p class="sub">Scan this code and tell us why.<br>It takes one tap.</p>

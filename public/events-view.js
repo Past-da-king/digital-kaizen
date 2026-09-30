@@ -21,10 +21,10 @@ document.getElementById('ladder').innerHTML = cfg.escalation.map(r =>
 
 const ch = cfg.alerts;
 document.getElementById('chan').innerHTML = `
-  <div class="chip ${ch.email ? '' : 'off'}">Email (SMTP) — <b>${ch.email ? 'connected' : 'not configured'}</b></div>
-  <div class="chip ${ch.webhook ? '' : 'off'}">Webhook fallback — <b>${ch.webhook ? 'connected' : 'not configured'}</b></div>
-  ${ch.any ? '' : '<div class="chip off">Alerts are being <b>recorded and shown</b> but not delivered — nothing is configured yet.</div>'}
-  ${cfg.alertScale > 1 ? `<div class="chip">Demo mode — escalation running <b>${cfg.alertScale}× faster</b></div>` : ''}`;
+  <div class="chip ${ch.email ? '' : 'off'}">Email: <b>${ch.email ? 'connected' : 'not configured'}</b></div>
+  <div class="chip ${ch.webhook ? '' : 'off'}">Webhook: <b>${ch.webhook ? 'connected' : 'not configured'}</b></div>
+  ${ch.any ? '' : '<div class="chip off">Alerts are being <b>recorded and shown</b> but not delivered, nothing is configured yet.</div>'}
+  ${cfg.alertScale > 1 ? `<div class="chip">Demo mode: escalation running <b>${cfg.alertScale}× faster</b></div>` : ''}`;
 
 async function load() {
   const [ev, al] = await Promise.all([

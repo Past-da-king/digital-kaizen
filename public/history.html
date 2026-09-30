@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Kaizen — History</title>
+<title>Digital Kaizen: History</title>
 <link rel="stylesheet" href="/style.css">
 </head><body>
 <header class="top">
@@ -25,24 +25,24 @@
     <button class="ghost" id="csv">Export CSV</button>
   </div>
 
-  <section class="card" style="margin-bottom:18px">
+  <section class="card" style="margin-bottom:20px">
     <div class="hd"><h2 id="chartTitle">Production</h2><div class="spacer"></div>
       <span class="part" id="chartSub"></span></div>
-    <div class="bd"><svg id="chart" style="width:100%;height:340px;display:block" preserveAspectRatio="none"></svg></div>
+    <div class="bd"><svg id="chart" style="width:100%;height:340px;display:block"></svg></div>
   </section>
 
   <div class="grid">
     <section class="card">
       <div class="hd"><h2>Period summary</h2></div>
       <div class="bd"><div class="stats" style="grid-template-columns:repeat(2,1fr)" id="sum"></div>
-        <p class="note" style="margin-top:14px">Rows are classified exactly the way the existing Node-RED
+        <p class="note" style="margin-top:4px">Rows are classified exactly the way the existing Node-RED
         History flow does it: a gap of <b>&le;60s</b> is a cycle, <b>&le;5&nbsp;min</b> a small stop,
         <b>&le;8&nbsp;h</b> down time, and anything longer non-scheduled time.</p></div>
     </section>
     <section class="card">
       <div class="hd"><h2>Shot rows</h2><div class="spacer"></div><span class="part" id="rowCount"></span></div>
       <div class="bd" style="padding:0"><div class="scroll"><table>
-        <thead><tr><th>Timestamp</th><th>Cycle (s)</th><th>Class</th></tr></thead>
+        <thead><tr><th>Time</th><th>Cycle (s)</th><th>Type</th></tr></thead>
         <tbody id="rows"></tbody></table></div></div>
     </section>
   </div>

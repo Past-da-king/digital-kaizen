@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Kaizen — How it works</title>
+<title>Digital Kaizen: How it works</title>
 <link rel="stylesheet" href="/style.css">
 <style>
   main{max-width:1000px}
@@ -22,7 +22,7 @@
   /* the chain */
   .chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
   .link{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px 16px;position:relative}
-  .link .n{font-size:10px;letter-spacing:.1em;color:var(--accent);font-weight:700}
+  .link .n{font-size:11px;letter-spacing:.1em;color:var(--accent);font-weight:700}
   .link b{display:block;font-size:15.5px;margin:7px 0 6px}
   .link span{font-size:13px;color:var(--dim);line-height:1.6}
 
@@ -84,7 +84,7 @@
   <div class="hero">
     <div class="eyebrow">How it works</div>
     <h1>Every machine. Every shot. Every stop.</h1>
-    <p>A small laser watches each moulding machine and counts what it makes — automatically, all day,
+    <p>A small laser watches each moulding machine and counts what it makes, automatically, all day,
     all night. When a machine stops, the system notices, times it, and asks the operator why.
     <b>No clipboards, no guessing, and nothing wired into the machine.</b></p>
   </div>
@@ -92,12 +92,12 @@
   <section class="blk">
     <h2>The problem it solves</h2>
     <div class="pull">
-      <p>Nobody can say exactly how much a machine actually ran yesterday — or where the lost hours went.
+      <p>Nobody can say exactly how much a machine actually ran yesterday, or where the lost hours went.
       By the time it shows up in the month-end numbers, the reason has been forgotten.</p>
     </div>
     <div class="cards">
       <div class="c"><div class="ico">📋</div><h3>Counted by hand</h3>
-        <p>Someone writes production on a sheet, at the end of a shift, from memory. Nobody blames them —
+        <p>Someone writes production on a sheet, at the end of a shift, from memory. Nobody blames them,
         it's the only tool they've been given.</p></div>
       <div class="c"><div class="ico">🕳️</div><h3>Stops vanish</h3>
         <p>A machine sits dead for forty minutes at 2am. Nothing records it, so it never happened,
@@ -128,7 +128,7 @@
         <p>On power-up it watches the mould move back and forth a few times and works out the machine's
         own range of travel. Nobody configures anything.</p></div>
       <div class="c"><div class="ico">🔁</div><h3>Shut → open → shut</h3>
-        <p>That's one part made. The time between two of them is the cycle time — and if that starts
+        <p>That's one part made. The time between two of them is the cycle time, and if that starts
         creeping up, the machine is struggling.</p></div>
       <div class="c"><div class="ico">⏱️</div><h3>Nothing moving</h3>
         <p>No movement for a few minutes means the machine has stopped, and the clock starts running.</p></div>
@@ -139,16 +139,16 @@
     <h2>Not every pause is downtime</h2>
     <p class="note" style="margin:0 0 16px;max-width:66ch">Calling every eight-second hiccup "downtime"
     produces numbers nobody trusts. So a stop is graded by how long it lasts, and each machine has its
-    own thresholds — a twelve-second cycle and a forty-five-second cycle do not mean the same thing by "stopped".</p>
+    own thresholds, a twelve-second cycle and a forty-five-second cycle do not mean the same thing by "stopped".</p>
     <div class="scale">
       <div class="row g"><div class="t">under a minute</div>
         <div><b>Micro-stop</b><span>Recorded quietly, never called downtime. But twenty of them in a shift
-        is a pattern worth finding — that's where the easy wins hide.</span></div></div>
+        is a pattern worth finding, that's where the easy wins hide.</span></div></div>
       <div class="row a"><div class="t">past the limit</div>
         <div><b>Downtime event</b><span>A real event with a number and a running clock. The operator is
         asked why. This is what appears on the report.</span></div></div>
       <div class="row r"><div class="t">longer still</div>
-        <div><b>Escalated</b><span>Supervisor, then operations manager, then plant management —
+        <div><b>Escalated</b><span>Supervisor, then operations manager, then plant management,
         one message each, not one every thirty seconds.</span></div></div>
     </div>
   </section>
@@ -156,7 +156,7 @@
   <section class="blk">
     <h2>The part only a person can answer</h2>
     <p class="note" style="margin:0 0 16px;max-width:66ch">The sensor knows a machine stopped and for how
-    long. It has <b>no idea why</b>. Only the person standing there knows that — so it asks them, in the
+    long. It has <b>no idea why</b>. Only the person standing there knows that, so it asks them, in the
     simplest way that will actually get used.</p>
     <div class="steps">
       <div class="step"><div><b>A printed code on the machine</b>
@@ -167,7 +167,7 @@
         <span>Material issue · Machine fault · Scheduled or unscheduled mould change · Maintenance · Order complete.
         Done in three seconds, with oily hands.</span></div></div>
       <div class="step"><div><b>The reason sticks to the event</b>
-        <span>From then on the report doesn't say "41 minutes lost". It says <b>"41 minutes lost to material shortage"</b>.</span></div></div>
+        <span>From then on the report doesn't say "41 minutes lost". It says <b>"41 minutes lost to material shortage".</b></span></div></div>
     </div>
   </section>
 
@@ -195,14 +195,14 @@
         <p>If the mould moves, it can be counted. A machine from 1995 works exactly as well as one from
         last year.</p></div>
       <div class="c"><div class="ico">➕</div><h3>One at a time</h3>
-        <p>Start with one machine. Add the next whenever you like — nothing has to be rebuilt to make room.</p></div>
+        <p>Start with one machine. Add the next whenever you like, nothing has to be rebuilt to make room.</p></div>
     </div>
   </section>
 
   <section class="blk">
     <h2>Under the bonnet</h2>
     <details>
-      <summary>Technical notes — for whoever maintains this</summary>
+      <summary>Technical notes, for whoever maintains this</summary>
       <div class="inner">
         <p><b>The chain.</b> An M5Stack AtomS3 with a time-of-flight laser measures platen distance at
         10&nbsp;Hz. It learns the stroke (five direction changes, minimum 200&nbsp;mm of travel), sets
@@ -210,30 +210,30 @@
         CLOSED&nbsp;→&nbsp;OPEN&nbsp;→&nbsp;CLOSED. It publishes JSON twice a second over MQTT.</p>
 
         <p><b>One firmware for every sensor.</b> A sensor does not know which machine it is on. It reports
-        the MAC address burned into its own chip and is paired to a machine on the Sensors page — so
+        the MAC address burned into its own chip and is paired to a machine on the Sensors page, so
         moving one is a dropdown, not a laptop and a USB cable, and the wrong file can never be flashed
         onto the wrong machine.</p>
 
         <p><b>Two failures that were found and guarded.</b> The device counts in its own memory, so the
         network is the weak point. If wifi drops and the machine keeps producing, the missed run is
         reconstructed on reconnect and logged as reconstructed rather than measured. If the device
-        power-cycles its counter restarts at zero — which naively reads as a part being made, and would
+        power-cycles its counter restarts at zero, which naively reads as a part being made, and would
         close an open downtime event with a false "recovered" while the machine was still standing still.
         Both are guarded and covered by tests.</p>
 
         <p><b>One setting to check on the first real machine.</b> The learning routine only counts movement
         when two consecutive readings differ by more than <code>MOVE_DELTA_MM</code>. The value the program
-        originally shipped with is the only one tested that can fail to arm at all — it works on a desk,
+        originally shipped with is the only one tested that can fail to arm at all, it works on a desk,
         where a hand waved past the sensor jumps hundreds of millimetres between readings, but a platen
         moving smoothly may not. It is now set lower, which armed in every case tested. Confirm on the
         first machine that the sensor leaves LEARNING within about two minutes.</p>
 
         <p><b>Numbers that are still estimates.</b> Expected cycle times are provisional until somebody
-        times the machines — they set when a stop counts as downtime and how many units a stop cost.
+        times the machines, they set when a stop counts as downtime and how many units a stop cost.
         Cavities per mould default to 1, so "units not made" currently under-states rather than invents.</p>
 
         <p><b>Talking to what already exists.</b> The production table matches the schema the existing
-        Node-RED flows write to, column for column, and the HTTP fallback route is the same path — so
+        Node-RED flows write to, column for column, and the HTTP fallback route is the same path, so
         an existing flow can be pointed at this without being rewritten.</p>
       </div>
     </details>
