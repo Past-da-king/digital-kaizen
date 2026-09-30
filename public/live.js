@@ -274,9 +274,11 @@ if (cfg.machines.length > 1) {
 
 shown.forEach(card);
 await refreshFromDb();
-setInterval(refreshFromDb, 10000);
+// A missed poll (wifi blip, page closing) is not an error worth raising;
+// the next one a moment later repaints everything.
+setInterval(() => refreshFromDb().catch(() => {}), 10000);
 await refreshEngine();
-setInterval(refreshEngine, 1000);
+setInterval(() => refreshEngine().catch(() => {}), 1000);
 
 // ---- demo controls. Present only when virtual machines are running;
 // against real hardware there is nothing to force.
