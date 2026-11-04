@@ -124,7 +124,7 @@ function roleNeeded(method, path) {
 // Pages and scripts that are only shells (the data behind them is gated).
 const OPEN_PATHS = new Set([
   '/login.html', '/login.js', '/invite.html', '/invite.js', '/ack', '/ack.html', '/ack.js',
-  '/log.html', '/log.js', '/attribute.html', '/attribute.js', '/style.css', '/theme.js', '/favicon.ico', '/favicon.svg',
+  '/log.html', '/log.js', '/log.css', '/ui.js', '/attribute.html', '/attribute.js', '/style.css', '/favicon.ico', '/favicon.svg',
   '/api/login', '/api/auth/state', '/api/auth/login', '/api/auth/2fa', '/api/auth/logout',
   '/api/invite/info', '/api/invite/start', '/api/invite/finish', '/api/ack/info', '/api/ack',
   // The device HTTP fallback only ACCEPTS readings, it never returns any.
@@ -598,8 +598,8 @@ export function startServer({ onLog = () => {} } = {}) {
       }
 
       // ---- the logs, the quality numbers and OEE
-      if (path === '/api/logs/downtime') { const w = windowFrom(q); return json(res, { rows: store.listDowntime({ machine: q.get('machine') || null, ...w }) }); }
-      if (path === '/api/logs/defects') { const w = windowFrom(q); return json(res, { rows: store.listDefects({ machine: q.get('machine') || null, ...w }) }); }
+      if (path === '/api/logs/downtime') { const w = windowFrom(q); return json(res, { rows: store.listDowntime({ machine: q.get('machine') || null, ...w, limit: Number(q.get('limit') || 5000) }) }); }
+      if (path === '/api/logs/defects') { const w = windowFrom(q); return json(res, { rows: store.listDefects({ machine: q.get('machine') || null, ...w, limit: Number(q.get('limit') || 5000) }) }); }
       if (path === '/api/logs/downtime.csv') {
         const w = windowFrom(q);
         return sendCsv(res, 'downtime_log', csv(

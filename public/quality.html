@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen: Quality</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="top"></header>
+<main>
+  <div class="page-title"><h1>Quality and downtime</h1><p>What operators logged at the machines.</p></div>
+  <div class="controls">
+    <div class="field"><label>Machine</label><select id="machine"></select></div>
+    <div class="field"><label>From</label><input type="date" id="from"></div>
+    <div class="field"><label>To</label><input type="date" id="to"></div>
+    <button id="go">Show</button>
+    <a class="btn ghost" id="csvDt" href="#">Downtime CSV</a><a class="btn ghost" id="csvDf" href="#">Defects CSV</a>
+  </div>
+  <div class="stats" id="kpis"></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))">
+    <section class="card"><div class="card-h"><h2>Downtime by reason</h2></div><div class="bd"><div id="reasons"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Defects by type</h2></div><div class="bd"><div id="types"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Defects per day</h2></div><div class="bd"><div id="defDays"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Logged downtime per day (minutes)</h2></div><div class="bd"><div id="dtDays"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Defect log</h2></div><div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>When</th><th>Machine</th><th>Qty</th><th>Type</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="defRows"></tbody></table></div></div></section>
+    <section class="card"><div class="card-h"><h2>Downtime log</h2></div><div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>Started</th><th>Machine</th><th>Min</th><th>Reason</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="dtRows"></tbody></table></div></div></section>
+  </div>
+</main>
+<script type="module" src="/quality.js"></script>
+</body></html>

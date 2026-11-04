@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen: Escalations</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="top"></header>
+<main>
+  <div class="page-title"><h1>Escalations</h1><p>Issues, who has been told, and whether the emails went out.</p>
+    <div class="spacer"></div><a class="btn ghost" href="/api/issues.csv">Export issues CSV</a><a class="btn ghost" href="/api/mail.csv">Export emails CSV</a></div>
+  <div id="mailbar"></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr))">
+    <section class="card"><div class="card-h"><h2>Open and recent issues</h2></div><div id="issues"></div></section>
+    <section class="card"><div class="card-h"><h2>Emails</h2><div class="spacer"></div><button class="ghost sm" id="retryAll">Retry all failed</button></div>
+      <div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>Time</th><th>Level</th><th>To</th><th>Status</th></tr></thead><tbody id="mail"></tbody></table></div></div></section>
+    <section class="card" style="grid-column:1/-1"><div class="card-h"><h2>Sensor downtime events</h2><div class="spacer"></div><span class="part">stops the sensors saw, and who explained them</span></div>
+      <div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>#</th><th>Machine</th><th>Started</th><th>Duration</th><th>Reason</th><th>Logged by</th><th>Parts not made</th><th>State</th></tr></thead><tbody id="events"></tbody></table></div></div></section>
+  </div>
+</main>
+<script type="module" src="/escalations.js"></script>
+</body></html>

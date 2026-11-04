@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen: Live floor (design review)</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="top"></header>
+<main>
+  <div class="hero" id="hero"></div>
+  <div class="machines" id="machines"></div>
+  <div class="grid" id="lower" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))"></div>
+</main>
+<script type="module">
+  import { mountHeader, live } from '/ui.js';
+  import { renderHero, renderMachines, renderLower } from '/dashboard.js';
+  import { model } from '/design/mock-data.js';
+  await mountHeader({ active: '/', me: { name: 'Ayanda', role: 'admin' } });
+  live(true);
+  renderHero(document.getElementById('hero'), model);
+  renderMachines(document.getElementById('machines'), model);
+  renderLower(document.getElementById('lower'), model);
+  document.body.dataset.ready = '1';
+</script>
+</body></html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen: My account</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="top"></header>
+<main>
+  <div class="page-title"><h1>My account</h1><p id="who"></p></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">
+    <section class="card"><div class="card-h"><h2>Change password</h2></div><div class="bd">
+      <div class="field" style="margin-bottom:12px"><label>Current password</label><input id="cur" type="password" autocomplete="current-password"></div>
+      <div class="field" style="margin-bottom:12px"><label>New password (10+ characters)</label><input id="nw" type="password" autocomplete="new-password"></div>
+      <div class="field" style="margin-bottom:12px"><label>Authenticator code</label><input id="c1" inputmode="numeric" maxlength="6"></div>
+      <button id="chg">Change password</button><div id="o1" class="note" style="margin-top:10px"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Recovery codes</h2></div><div class="bd">
+      <p class="note" id="left"></p>
+      <div class="field" style="margin-bottom:12px"><label>Password</label><input id="p2" type="password" autocomplete="current-password"></div>
+      <div class="field" style="margin-bottom:12px"><label>Authenticator code</label><input id="c2" inputmode="numeric" maxlength="6"></div>
+      <button id="rc">Make 10 new codes</button><div id="o2" style="margin-top:10px"></div></div></section>
+  </div>
+</main>
+<script type="module" src="/account.js"></script>
+</body></html>

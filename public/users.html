@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Kaizen: People</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="top"></header>
+<main>
+  <div class="page-title"><h1>People</h1><p>Dashboard accounts. There is no public sign-up: an admin adds each person and they finish setting up from a one-time link. Operators who log at the machines are managed in <a href="/settings.html">Settings</a>.</p></div>
+  <div id="linkBox"></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))">
+    <section class="card"><div class="card-h"><h2>Add a person</h2></div><div class="bd">
+      <div class="field" style="margin-bottom:12px"><label>Name</label><input id="nm"></div>
+      <div class="field" style="margin-bottom:12px"><label>Email</label><input id="em" type="email"></div>
+      <div class="field" style="margin-bottom:12px"><label>Role</label><select id="rl"><option value="viewer">Viewer: sees the dashboard</option><option value="manager" selected>Manager: also acknowledges issues and exports</option><option value="admin">Admin: everything, including settings and people</option></select></div>
+      <label class="chip" style="cursor:pointer;margin-bottom:14px"><input type="checkbox" id="mailIt"> Email them the setup link (needs mail set up)</label><br>
+      <button id="add">Create account and link</button><div class="err" id="err" style="color:var(--down);margin-top:8px"></div></div></section>
+    <section class="card"><div class="card-h"><h2>Accounts</h2></div><div class="bd" style="padding:0"><div class="scroll" style="max-height:none"><table><thead><tr><th>Name</th><th>Role</th><th>State</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div></section>
+    <section class="card" style="grid-column:1/-1"><div class="card-h"><h2>Sign-in activity</h2></div><div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>Time</th><th>Event</th><th>Who</th><th>From</th></tr></thead><tbody id="log"></tbody></table></div></div></section>
+  </div>
+</main>
+<script type="module" src="/users.js"></script>
+</body></html>

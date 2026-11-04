@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Digital Kaizen: Log (design review)</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/log.css">
+</head><body>
+<div class="phone" id="app"></div>
+<script type="module">
+  // Design review only: the real page, fed a canned answer instead of the server.
+  const state = new URLSearchParams(location.search).get('state') || 'running';
+  const ctx = {
+    ok: true, machine: { id: 'MA2', name: 'Haitian MA2', part: '' },
+    state, status: state === 'down' ? 'DOWNTIME' : 'RUNNING',
+    event: state === 'down' ? { id: 31, started_at: '2026-11-04 10:10:00', elapsed_seconds: 860, elapsed_human: '14m 20s' } : null,
+    unexplained: state === 'running' ? [{ id: 30, started_at: '2026-11-04 09:21:00', duration_human: '7m 12s' }] : [],
+    reasons: [['Scheduled maintenance', 1], ['Unscheduled maintenance', 0], ['Scheduled mould change', 1], ['Unscheduled mould change', 0], ['Material issue', 0], ['Order complete', 1], ['Waiting for operator', 0], ['Power or utilities', 0]]
+      .map(([label, planned]) => ({ code: label.toLowerCase().replace(/ /g, '_'), label, planned: Boolean(planned) })),
+    defectTypes: ['Short shot', 'Flash', 'Sink marks', 'Burn marks', 'Warping', 'Black specks', 'Splay streaks', 'Weld lines', 'Dimensions', 'Colour', 'Damaged', 'Other']
+      .map(label => ({ code: label.toLowerCase().replace(/ /g, '_'), label })),
+    operators: [{ id: 1, name: 'Thandi' }, { id: 2, name: 'Sipho' }, { id: 3, name: 'Nomsa' }, { id: 4, name: 'Pieter' }, { id: 5, name: 'Lerato' }],
+    pinRequired: false, shift: 'A', shiftDay: '2026-11-04', shifts: ['A', 'B'], serverTime: '2026-11-04 10:24:00',
+    defectsThisShift: 9, defectLimit: 25,
+    recent: [{ kind: 'defects', at: '2026-11-04 09:21:00', text: '9 x Flash', by: 'Sipho' }, { kind: 'downtime', at: '2026-11-04 07:05:00', text: 'Material issue, 18 min', by: 'Nomsa' }],
+  };
+  const q = new URLSearchParams(location.search);
+  localStorage.setItem('dk-op', q.get('op') || '2');
+  const real = window.fetch.bind(window);
+  window.fetch = (url, opts) => String(url).startsWith('/api/log/context') ? Promise.resolve(new Response(JSON.stringify(ctx), { headers: { 'content-type': 'application/json' } })) : real(url, opts);
+  history.replaceState(null, '', `${location.pathname}?m=MA2&k=demo&state=${state}${q.get('theme') ? '&theme=' + q.get('theme') : ''}`);
+  await import('/log.js');
+  const go = q.get('go');
+  if (go) { await new Promise(r => setTimeout(r, 300)); document.querySelector(`[data-go="${go}"]`)?.click(); }
+  document.body.dataset.ready = '1';
+</script>
+</body></html>

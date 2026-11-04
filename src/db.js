@@ -427,6 +427,7 @@ export function dataRange() {
 
 export function wipe() {
   db.exec('DELETE FROM production; DELETE FROM machine_events; DELETE FROM heartbeat; DELETE FROM downtime_events; DELETE FROM micro_stops; DELETE FROM alerts;');
+  for (const t of ['downtime_logs', 'defect_logs', 'issues', 'mail_queue']) { try { db.exec(`DELETE FROM ${t}`); } catch { /* table not created yet */ } }
   // device_assignments is deliberately NOT wiped — it describes the
   // physical installation, not the data.
 }

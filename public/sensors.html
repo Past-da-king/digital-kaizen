@@ -17,10 +17,7 @@
     box-shadow:0 0 0 3px rgba(61,220,132,.15)}
 </style>
 </head><head></head><body>
-<header class="top">
-  <div class="brand">Digital <span>Kaizen</span></div>
-  <nav><a href="/" class="">Live floor</a><a href="/events.html" class="">Events</a><a href="/history.html" class="">History</a><a href="/sensors.html" class="on">Sensors</a><a href="/qr.html" class="">Labels</a><a href="/about.html" class="">How it works</a></nav>
-</header>
+<header class="top"></header>
 <main>
   <p class="note" style="max-width:800px;margin:0 0 18px">
     Every sensor runs the <b>same firmware</b>. None of them knows which machine it is bolted to,
@@ -38,4 +35,5 @@
   </section>
 </main>
 <script type="module" src="/sensors.js"></script>
+<script type="module">import { mountHeader } from '/ui.js'; mountHeader({ active: '/sensors.html', clock: false });</script>
 </body></html>

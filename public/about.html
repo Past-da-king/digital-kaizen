@@ -75,10 +75,7 @@
   details table{margin:12px 0;font-size:13px}
 </style>
 </head><body>
-<header class="top">
-  <div class="brand">Digital <span>Kaizen</span></div>
-  <nav><a href="/">Live floor</a><a href="/events.html">Events</a><a href="/history.html">History</a><a href="/sensors.html">Sensors</a><a href="/qr.html">Labels</a><a href="/about.html" class="on">How it works</a></nav>
-</header>
+<header class="top"></header>
 <main>
 
   <div class="hero">
@@ -240,4 +237,5 @@
   </section>
 
 </main>
+<script type="module">import { mountHeader } from '/ui.js'; mountHeader({ active: '/about.html', clock: false });</script>
 </body></html>
