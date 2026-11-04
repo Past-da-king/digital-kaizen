@@ -181,20 +181,13 @@ export const DOWNTIME_RULES = {
   },
 };
 
-// Who gets told, and when. Minutes from the START of the stoppage.
-// One message per rung per event — never a message every 30 seconds.
-export const ESCALATION = [
-  { afterMin: 2,  level: 'event',      to: 'Line operator',       channel: 'screen' },
-  { afterMin: 5,  level: 'operator',   to: 'Line operator',       channel: 'email'  },
-  { afterMin: 10, level: 'supervisor', to: 'Shift supervisor',    channel: 'email'  },
-  { afterMin: 15, level: 'manager',    to: 'Operations manager',  channel: 'email'  },
-  { afterMin: 30, level: 'critical',   to: 'Plant management',    channel: 'email'  },
-];
+// Who gets told, and when, is NOT here. The escalation ladder (people,
+// roles, levels and timings) is edited on the Settings screen and stored
+// in the database. See src/settings.js and src/starter.js.
 
-// The reasons an operator can pick when they scan the QR code.
-// These live HERE, in the app — the sensor knows nothing about them.
-// Changing this list changes the buttons on every machine's QR page
-// immediately; no device is reflashed and nothing is redeployed.
+// STARTING list of downtime reasons. It is copied into the database on the
+// first run; after that it is edited on the Settings screen, and changing it
+// changes the choices on every machine's QR page at once.
 // `planned` separates downtime the factory CHOSE from downtime it
 // SUFFERED, which is the split that matters on an OEE report.
 export const STOP_REASONS = [

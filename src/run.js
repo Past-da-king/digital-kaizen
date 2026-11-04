@@ -21,6 +21,9 @@ import { MACHINES, MQTT, WEB, FIRMWARE, NETWORK } from './config.js';
 import { registerDevice } from './devices.js';
 import { seeDevice, assignDevice, deviceFor } from './db.js';
 import { isLocked, secretsSource, deviceCredentials } from './auth.js';
+import { tick as escalationTick } from './escalation.js';
+import { processQueue } from './mail.js';
+import { accountsEnabled } from './users.js';
 
 const SPEED = Number(process.env.DK_SPEED || 1);
 // On-site mode. The simulators are forced OFF here and that is not a
@@ -37,6 +40,12 @@ if (EXTERNAL) log(`on-site mode — listening on the existing broker ${MQTT.exte
 else await startBroker({ onLog: log });
 startMqttIngest({ onLog: log });
 await startServer({ onLog: log });
+
+// The escalation ladder and the mail queue run on their own clocks. Both
+// read what is due from the database, so a restart loses nothing.
+setInterval(() => { try { escalationTick(); } catch (e) { log(`escalation error: ${e.message}`); } }, 10_000);
+setInterval(() => { processQueue().catch((e) => log(`mail error: ${e.message}`)); }, 15_000);
+escalationTick();
 
 if (NO_SIM) {
   log('simulators OFF — waiting for real devices');
@@ -109,6 +118,9 @@ if (NO_SIM) {
   if (SPEED > 1) log(`speed x${SPEED}`);
 }
 
+log(accountsEnabled()
+  ? 'accounts: signed-in users with two-step verification'
+  : 'accounts: none yet. Create the first admin with:  npm run admin -- "Your Name" you@example.com');
 log(`security: ${isLocked() ? 'credentials required (' + secretsSource() + ')' : 'OPEN — fine on a private LAN, never on a public IP'}`);
 console.log('  ' + '-'.repeat(46));
 console.log(`\n  Dashboard   http://localhost:${WEB.port}`);

@@ -125,6 +125,7 @@ db.exec(`
 
 // Older databases predate the `planned` column.
 try { db.exec('ALTER TABLE downtime_events ADD COLUMN planned INTEGER'); } catch { /* already there */ }
+try { db.exec('ALTER TABLE downtime_events ADD COLUMN attributed_by TEXT'); } catch { /* already there */ }
 
 // Any downtime event still OPEN at boot belongs to a previous run of
 // the server — nothing is watching its clock any more. Close it out
@@ -178,7 +179,7 @@ const evStmts = {
   ),
   byId: db.prepare(`SELECT * FROM downtime_events WHERE id = ?`),
   attribute: db.prepare(
-    `UPDATE downtime_events SET reason_code = ?, reason_label = ?, note = ?, attributed_at = ?, planned = ? WHERE id = ?`
+    `UPDATE downtime_events SET reason_code = ?, reason_label = ?, note = ?, attributed_at = ?, planned = ?, attributed_by = ? WHERE id = ?`
   ),
   recent: db.prepare(
     `SELECT * FROM downtime_events WHERE (? IS NULL OR machine_id = ?)
@@ -205,7 +206,7 @@ export function closeDowntime(id, at, seconds, lostShots, lostValue) { evStmts.c
 export function escalateDowntime(id, level) { evStmts.escalate.run(level, id); }
 export function openDowntimeFor(machineId) { return evStmts.openFor.get(machineId) || null; }
 export function downtimeById(id) { return evStmts.byId.get(id) || null; }
-export function attributeDowntime(id, code, label, note, planned) { evStmts.attribute.run(code, label, note || null, iso(new Date()), planned ? 1 : 0, id); }
+export function attributeDowntime(id, code, label, note, planned, by = null) { evStmts.attribute.run(code, label, note || null, iso(new Date()), planned ? 1 : 0, by || null, id); }
 export function recentDowntime(machineId, limit = 40) { return evStmts.recent.all(machineId ?? null, machineId ?? null, limit); }
 export function recordMicroStop(machineId, at, seconds) { evStmts.microStop.run(machineId, iso(at), seconds); }
 export function microStopStats(machineId, sinceIso) { return evStmts.microCount.get(machineId, sinceIso) || { n: 0, min: 0 }; }

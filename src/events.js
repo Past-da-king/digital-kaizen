@@ -18,11 +18,11 @@
 // down for an hour produces five messages, not a hundred and twenty.
 // ============================================================
 
-import {
-  DOWNTIME_RULES, ESCALATION, CAVITIES, MACHINES, STOP_REASONS,
-} from './config.js';
+import { DOWNTIME_RULES, MACHINES } from './config.js';
 import * as db from './db.js';
-import { send as sendAlert } from './notify.js';
+import * as settings from './settings.js';
+import * as store from './store.js';
+import { tick as escalationTick } from './escalation.js';
 
 // Demo aid only: makes the 30-minute escalation ladder play out in
 // about a minute so the whole thing can be shown in a meeting.
@@ -122,52 +122,10 @@ export function observe(payload, now = new Date()) {
     emit('downtime-open', id, s.eventId, { startedAt: new Date(s.stopSince).toISOString() });
   }
 
-  // ---- climb the escalation ladder, one rung at a time, once each
-  if (s.eventId !== null) {
-    // Normally the ladder is measured in real minutes from the start
-    // of the stoppage. In demo mode it is anchored to the moment the
-    // event opened and then run fast, so the rungs still fire one at
-    // a time and in order instead of three at once.
-    const stoppedMin = ALERT_SCALE > 1
-      ? ESCALATION[0].afterMin + ((gapSec - rules.downtimeSec) / 60) * ALERT_SCALE
-      : gapSec / 60;
-    if (gapSec >= rules.criticalSec) db.escalateDowntime(s.eventId, 'critical');
-
-    for (const rung of ESCALATION) {
-      if (stoppedMin < rung.afterMin || s.fired.has(rung.level)) continue;
-      s.fired.add(rung.level);
-      fire(id, s.eventId, rung, gapSec, now);
-    }
-  }
-}
-
-function fire(machineId, eventId, rung, gapSec, now) {
-  const m = MACHINES.find(x => x.id === machineId);
-  const ev = db.downtimeById(eventId);
-  const reason = ev?.reason_label || 'Not yet attributed';
-  const dur = human(gapSec);
-
-  const message =
-    `\u{1F534} DOWNTIME ALERT\n\n` +
-    `Machine: ${m?.name || machineId}\n` +
-    `Started: ${(ev?.started_at || '').slice(11, 19)}\n` +
-    `Duration: ${dur}\n` +
-    `Reason: ${reason}\n\n` +
-    `Attribute it: ${baseUrl()}/attribute.html?m=${machineId}`;
-
-  const result = sendAlert({ recipient: rung.to, message, subject: `\u{1F534} Downtime — ${m?.name || machineId} — ${dur}` });
-
-  const alertId = db.addAlert({
-    eventId, machineId, at: now, level: rung.level,
-    channel: rung.channel, recipient: rung.to, message,
-    delivered: false, detail: result.detail,
-  });
-  // Settle the row on the REAL outcome, not on having called fetch().
-  result.settled.then(({ delivered, detail }) => {
-    db.setAlertDelivery(alertId, delivered, detail);
-    emit('alert-settled', machineId, eventId, { alertId, delivered, detail });
-  });
-  emit('alert', machineId, eventId, { level: rung.level, channel: rung.channel, to: rung.to, detail: result.detail });
+  // ---- the event is escalated by the issue ladder (escalation.js): once it
+  // is older than the limit in Settings it becomes an issue and the people
+  // on the ladder are emailed. Here we only mark it critical.
+  if (s.eventId !== null && gapSec >= rules.criticalSec) db.escalateDowntime(s.eventId, 'critical');
 }
 
 function closeIfOpen(id, s, rules, now) {
@@ -184,36 +142,28 @@ function closeIfOpen(id, s, rules, now) {
   // Cycles the machine did not run, and the units those cycles would
   // have produced. Deliberately NOT money — a rand figure needs a part
   // price nobody has given us, and a made-up one is worse than none.
-  const lostShots = Math.max(0, Math.round(secs / rules.expectedCycleSec));
-  const lostUnits = lostShots * (CAVITIES[id] || 1);
+  const mould = settings.mouldFor(id);
+  const lostShots = Math.max(0, Math.round(secs / (mould.idealCycleSec || rules.expectedCycleSec)));
+  const lostUnits = lostShots * (mould.cavities || 1);
 
   db.closeDowntime(s.eventId, now, Math.round(secs), lostShots, lostUnits);
 
   const ev = db.downtimeById(s.eventId);
-  const m = MACHINES.find(x => x.id === id);
   const reason = ev?.reason_label || 'Not attributed';
 
-  // The recovery message. This is the one that makes the system look
-  // professional rather than noisy — it closes the loop.
-  if (s.fired.size > 0) {
-    const message =
-      `\u{1F7E2} RECOVERED\n\n` +
-      `Machine: ${m?.name || id}\n` +
-      `Total downtime: ${human(secs)}\n` +
-      `Reason: ${reason}\n` +
-      `Not made: ${lostUnits.toLocaleString()} units (${lostShots} cycles missed)`;
-    const result = sendAlert({ recipient: 'Operations manager', message, subject: `\u{1F7E2} Recovered — ${m?.name || id}` });
-    const alertId = db.addAlert({ eventId: s.eventId, machineId: id, at: now, level: 'recovered', channel: 'email', recipient: 'Operations manager', message, delivered: false, detail: result.detail });
-    result.settled.then(({ delivered, detail }) => db.setAlertDelivery(alertId, delivered, detail));
-  }
+  // The stop is over: its issue resolves (and tells whoever was told), and
+  // if an operator already explained it, it joins the downtime log.
+  syncLogForEvent(s.eventId);
+  escalationTick(now);
 
   emit('downtime-close', id, s.eventId, { seconds: Math.round(secs), lostShots, lostUnits, reason });
   s.eventId = null;
   s.fired = new Set();
 }
 
-export function attribute(eventId, code, note) {
-  const r = STOP_REASONS.find(x => x.code === code);
+
+export function attribute(eventId, code, note, operator = null) {
+  const r = settings.reasons().find(x => x.code === code);
   if (!r) return { ok: false, error: 'unknown reason' };
 
   // Verify the event exists BEFORE reporting success. Without this an
@@ -224,9 +174,22 @@ export function attribute(eventId, code, note) {
     return { ok: false, error: `no downtime event #${eventId}` };
   }
 
-  db.attributeDowntime(id, r.code, r.label, note, r.planned);
+  db.attributeDowntime(id, r.code, r.label, note, r.planned, operator);
+  syncLogForEvent(id);
   emit('attributed', db.downtimeById(id)?.machine_id, id, { reason: r.label, planned: r.planned });
   return { ok: true, reason: r.label, planned: r.planned };
+}
+
+// A stop the sensor saw and a person explained becomes a row in the
+// downtime log, so the reports have ONE place to read from.
+export function syncLogForEvent(id) {
+  const ev = db.downtimeById(id);
+  if (!ev || ev.state !== 'CLOSED' || !ev.reason_code || store.downtimeLogForEvent(id)) return null;
+  return store.addDowntimeLog({
+    machineId: ev.machine_id, reasonCode: ev.reason_code, reasonLabel: ev.reason_label, planned: Boolean(ev.planned),
+    startedAt: ev.started_at, endedAt: ev.ended_at, minutes: Math.round(((ev.seconds || 0) / 60) * 10) / 10,
+    note: ev.note, eventId: id, operator: ev.attributed_by || null, source: 'sensor',
+  });
 }
 
 // What the QR page needs: the open event for this machine, if any.
