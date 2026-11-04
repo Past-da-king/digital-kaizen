@@ -1,5 +1,5 @@
 // ============================================================
-// Storage.
+// Storage. The schema itself is in migrate.js (versioned, additive, backed up).
 //
 // `production` is the CLIENT'S table, column for column, so the
 // existing Node-RED "History Data Browser" flow can be pointed at
@@ -20,112 +20,20 @@
 
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
+import { migrate } from './migrate.js';
 import { dirname } from 'node:path';
 import { DB, KAIZEN, SHIFTS } from './config.js';
 
 mkdirSync(dirname(DB.file), { recursive: true });
+// The migration runner decides, BEFORE changing anything, whether this file already holds an install,
+// and takes its safety backup first. See migrate.js.
 const db = new DatabaseSync(DB.file);
+db.exec('PRAGMA journal_mode = WAL;');
 
-db.exec(`
-  PRAGMA journal_mode = WAL;
-
-  -- The client's table. Do not add columns to this one.
-  CREATE TABLE IF NOT EXISTS production (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp  TEXT    NOT NULL,
-    machine_id TEXT    NOT NULL,
-    cycletime  REAL,
-    downtime   REAL
-  );
-  CREATE INDEX IF NOT EXISTS idx_prod_ts      ON production(timestamp);
-  CREATE INDEX IF NOT EXISTS idx_prod_machine ON production(machine_id, timestamp);
-
-  -- Ours: every status transition, so downtime can be reported as
-  -- real intervals rather than inferred from cycle-time buckets.
-  CREATE TABLE IF NOT EXISTS machine_events (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp  TEXT    NOT NULL,
-    machine_id TEXT    NOT NULL,
-    status     TEXT    NOT NULL,
-    ended_at   TEXT,
-    seconds    REAL
-  );
-  CREATE INDEX IF NOT EXISTS idx_ev_machine ON machine_events(machine_id, timestamp);
-
-  -- A formal, attributable downtime event. This is the record an
-  -- operator answers for and a manager gets escalated about.
-  CREATE TABLE IF NOT EXISTS downtime_events (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    machine_id   TEXT NOT NULL,
-    started_at   TEXT NOT NULL,
-    ended_at     TEXT,
-    seconds      REAL,
-    level        TEXT NOT NULL DEFAULT 'downtime',   -- downtime | critical
-    state        TEXT NOT NULL DEFAULT 'OPEN',       -- OPEN | CLOSED
-    reason_code  TEXT,
-    reason_label TEXT,
-    note         TEXT,
-    attributed_at TEXT,
-    planned      INTEGER,          -- 1 = downtime the factory chose, 0 = downtime it suffered
-    lost_shots   INTEGER,
-    lost_value   REAL
-  );
-  CREATE INDEX IF NOT EXISTS idx_dt_machine ON downtime_events(machine_id, started_at);
-  CREATE INDEX IF NOT EXISTS idx_dt_state   ON downtime_events(state);
-
-  -- Micro-stops: recorded but deliberately NOT downtime. Repeated
-  -- micro-stops are the Kaizen signal.
-  CREATE TABLE IF NOT EXISTS micro_stops (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    machine_id TEXT NOT NULL,
-    at         TEXT NOT NULL,
-    seconds    REAL NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_ms_machine ON micro_stops(machine_id, at);
-
-  -- Every alert the escalation ladder fired. One row per rung per
-  -- event, which is what stops the same stoppage spamming anyone.
-  CREATE TABLE IF NOT EXISTS alerts (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id   INTEGER NOT NULL,
-    machine_id TEXT NOT NULL,
-    at         TEXT NOT NULL,
-    level      TEXT NOT NULL,
-    channel    TEXT NOT NULL,
-    recipient  TEXT NOT NULL,
-    message    TEXT NOT NULL,
-    delivered  INTEGER NOT NULL DEFAULT 0,
-    detail     TEXT
-  );
-  CREATE INDEX IF NOT EXISTS idx_al_event ON alerts(event_id);
-
-  -- WHICH PHYSICAL SENSOR IS ON WHICH MACHINE.
-  --
-  -- The sensor no longer knows what machine it is bolted to. It only
-  -- knows its own MAC address, which is burned into the chip and can
-  -- never be typed wrong. The mapping lives here instead, so every
-  -- sensor gets the SAME firmware and moving one to another machine
-  -- is a dropdown, not a laptop and a USB cable.
-  CREATE TABLE IF NOT EXISTS device_assignments (
-    device_id   TEXT PRIMARY KEY,     -- the MAC, lower case, no colons
-    machine_id  TEXT,                 -- NULL until somebody assigns it
-    assigned_at TEXT,
-    first_seen  TEXT NOT NULL,
-    last_seen   TEXT NOT NULL,
-    note        TEXT
-  );
-
-  -- Ours: last time we heard from each device at all.
-  CREATE TABLE IF NOT EXISTS heartbeat (
-    machine_id TEXT PRIMARY KEY,
-    last_seen  TEXT NOT NULL,
-    source     TEXT
-  );
-`);
-
-// Older databases predate the `planned` column.
-try { db.exec('ALTER TABLE downtime_events ADD COLUMN planned INTEGER'); } catch { /* already there */ }
-try { db.exec('ALTER TABLE downtime_events ADD COLUMN attributed_by TEXT'); } catch { /* already there */ }
+// All schema lives in versioned, additive, idempotent migrations (migrate.js).
+// A live database is backed up first, upgraded in a transaction, and checked
+// for lost rows afterwards.
+export const migration = migrate(db, { file: DB.file, log: (m) => { if (process.env.DK_QUIET !== '1') console.log(`  db: ${m}`); } });
 
 // Any downtime event still OPEN at boot belongs to a previous run of
 // the server — nothing is watching its clock any more. Close it out

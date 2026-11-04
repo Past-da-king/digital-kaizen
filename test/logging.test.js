@@ -231,3 +231,29 @@ test('light brake: a script hammering the page is slowed, a person is not', asyn
   for (let i = 0; i < 130; i++) last = (await ctx('MA2')).status;
   assert.equal(last, 429);
 });
+
+test('the state timeline: running, idle, down and planned stops across a shift', async () => {
+  const at = (h, m) => new Date(2026, 0, 15, h, m);
+  for (const id of ['MA1', 'MA2']) {
+    dbm.recordStatus({ machineId: id, status: 'RUNNING', at: at(6, 0) });
+    dbm.recordStatus({ machineId: id, status: 'DOWNTIME', at: at(8, 0) });
+    dbm.recordStatus({ machineId: id, status: 'RUNNING', at: at(8, 10) });
+    dbm.recordStatus({ machineId: id, status: 'CYCLE DELAY', at: at(9, 30) });
+    dbm.recordStatus({ machineId: id, status: 'RECONNECT +2 shots', at: at(9, 30) });   // a marker keeps the state it interrupted
+    dbm.recordStatus({ machineId: id, status: 'RUNNING', at: at(9, 31) });
+  }
+  const from = at(6, 0), to = at(18, 0), now = at(10, 0);
+  const plain = oee.stateTimeline('MA1', from, to, now);
+  assert.deepEqual(plain.segments, [['r', 120], ['d', 10], ['r', 80], ['i', 1], ['r', 29]]);
+  assert.equal(plain.minutes, 240);
+
+  // an operator logs that 10-minute stop as planned (a mould change): the red becomes blue
+  store.addDowntimeLog({ machineId: 'MA2', reasonCode: 'scheduled_mould_change', reasonLabel: 'Scheduled mould change', planned: true, startedAt: '2026-01-15 08:00:00', endedAt: '2026-01-15 08:10:00', minutes: 10, now });
+  assert.deepEqual(oee.stateTimeline('MA2', from, to, now).segments, [['r', 120], ['p', 10], ['r', 80], ['i', 1], ['r', 29]]);
+
+  // before the machine has any record the strip says "no data", never "running"
+  assert.deepEqual(oee.stateTimeline('MA1', at(4, 0), at(5, 0), at(5, 0)).segments, [['o', 60]]);
+  const api = (await get('/api/timeline')).body;
+  assert.equal(api.machines.length, 2);
+  assert.ok(Array.isArray(api.machines[0].segments));
+});

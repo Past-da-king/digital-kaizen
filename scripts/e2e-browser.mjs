@@ -43,10 +43,11 @@ await page.waitForSelector('.codes');
 const codes = await page.locator('.codes span').allInnerTexts();
 ok('invite flow gives 10 recovery codes', codes.length === 10);
 await page.click('#done'); await page.waitForURL(BASE + '/');
-ok('admin lands on the dashboard after setup', await page.locator('.hero').count() === 1);
+await page.waitForSelector('#andon .tile', { timeout: 20000 });
+ok('admin lands on the dashboard after setup', await page.locator('#andon .tile').count() >= 1);
 
 // sign out, sign in with the NEXT 30 s code (the setup code is spent)
-await page.click('#meBtn'); await page.click('#signOut'); await page.waitForURL('**/login.html');
+await page.click('#who'); await page.click('#signOut'); await page.waitForURL('**/login.html');
 await page.fill('#email', 'a@factory.test'); await page.fill('#pw', 'wrong-password-123'); await page.click('#go');
 await page.waitForFunction(() => document.querySelector('#err')?.textContent.length > 0);
 ok('wrong password is refused', (await page.locator('#err').innerText()).includes('Wrong email or password'));
@@ -66,7 +67,7 @@ await page.fill('#dtMin', '1'); await page.fill('#dfMax', '8');
 await page.fill('#every', '0.5'); await page.click('#spread');
 // make level 3 carry two people to prove several people per level
 await page.click('[data-addp="2"]');
-const lastPerson = page.locator('#levels .level').nth(2).locator('.person').last();
+const lastPerson = page.locator('#levels .lv').nth(2).locator('.pp').last();
 await lastPerson.locator('.pn').fill('Second Manager'); await lastPerson.locator('.pr').fill('Deputy'); await lastPerson.locator('.pe').fill('deputy.production@evernu.example');
 await page.click('#save'); await page.waitForSelector('.toast');
 const settingsSaved = await (await fetch(BASE + '/api/settings', { headers: { cookie: (await desk.cookies()).map(c => `${c.name}=${c.value}`).join('; ') } })).json();
@@ -85,7 +86,7 @@ const qrTarget2 = (await aget('/api/qr?m=MA2')).headers.get('x-qr-target').repla
 const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const p = await phone.newPage(); watch(p, 'phone');
 await p.goto(qrTarget); await p.waitForSelector('.act');
-ok('MA1 running: only Log defects (no downtime button)', (await p.locator('.act.dt').count()) === 0 && (await p.locator('.act.df').count()) === 1, await p.locator('.statebar .big').innerText());
+ok('MA1 running: only Log defects (no downtime button)', (await p.locator('.act.dt').count()) === 0 && (await p.locator('.act.df').count()) === 1, await p.locator('.hd .w').innerText());
 await p.screenshot({ path: join(OUT, 'e2e-3-qr-running.png') });
 await p.click('.name >> text=Thandi Mokoena');
 await p.click('.act.df');
@@ -157,6 +158,45 @@ const l1 = ma2.find(m => /Level 1/.test(m.subject));
 ok('email says machine, issue, since when and who it has gone to', l1 && ['Machine:', 'Haitian MA2', 'Since:', 'Already told', 'Next:'].every(w => l1.text.includes(w)));
 ok('level 3 went to both people at that level', mails.filter(m => /Level 3/.test(m.subject) && /MA2/.test(m.subject)).length === 2);
 
+
+// ---------- the built app, every page, both sizes, both themes (taken while MA2 is DOWN) ----------
+const SHOTS = join(OUT, 'built'); mkdirSync(SHOTS, { recursive: true });
+const staffPhone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+await staffPhone.addCookies(await desk.cookies());
+const anonDesk = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+const SIZES = [[1920, 'desk'], [390, 'phone']];
+async function capture(name, path, { qr = false, click = null, anon = false, only = null } = {}) {
+  for (const th of ['dark', 'light']) for (const [w, kind] of SIZES) {
+    if (only && only !== kind) continue;
+    const ctxx = anon || qr ? (kind === 'desk' ? anonDesk : phone) : (kind === 'desk' ? desk : staffPhone);
+    const pg = await ctxx.newPage(); watch(pg, `shot-${name}-${w}`);
+    await pg.goto(`${BASE}${path}${path.includes('?') ? '&' : '?'}theme=${th}`);
+    if (click) { await pg.waitForSelector(click); await pg.click(click); await pg.waitForTimeout(300); }
+    await pg.waitForLoadState('networkidle'); await pg.waitForTimeout(1100);
+    if (kind === 'phone') {
+      const over = await pg.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      ok(`no sideways scroll: ${name} at 390 ${th}`, over <= 2, String(over));
+    }
+    await pg.screenshot({ path: join(SHOTS, `${name}-${w}-${th}.png`), fullPage: true });
+    await pg.close();
+  }
+}
+await capture('1-dashboard', '/');
+await capture('2-machine', '/machine.html?m=MA2');
+await capture('3-quality-and-oee', '/quality.html');
+await capture('4-history', '/history.html');
+await capture('5-settings', '/settings.html');
+await capture('6-qr-machine-down', qrTarget2.replace(BASE, ''), { qr: true });
+await capture('7-qr-machine-running', qrTarget.replace(BASE, ''), { qr: true });
+await capture('8-qr-log-downtime', qrTarget2.replace(BASE, ''), { qr: true, click: '.act.dt' });
+await capture('9-qr-log-defects', qrTarget.replace(BASE, ''), { qr: true, click: '.act.df' });
+await capture('10-escalations', '/escalations.html');
+await capture('11-qr-labels', '/qr.html');
+await capture('12-sensors', '/sensors.html');
+await capture('13-people', '/users.html');
+await capture('14-account', '/account.html');
+await capture('15-how-it-works', '/about.html');
+
 // explain the live stop from the phone, then acknowledge from the email link
 await p2.click('.name >> text=Sipho Dlamini'); await p2.click('.act.dt'); await p2.click('[data-reason="material_issue"]'); await p2.fill('#note', 'resin dryer tripped'); await p2.click('#send'); await p2.waitForSelector('.done');
 ok('downtime reason saved against the live stop', (await p2.locator('.done h1').innerText()).includes('Downtime saved'));
@@ -166,7 +206,7 @@ ok('email carries an acknowledge link', Boolean(ackLink));
 const before = (await sinkMsgs()).filter(m => /Level/.test(m.subject) && /MA2/.test(m.subject)).length;
 const ap = await desk.newPage(); watch(ap, 'ack');
 await ap.goto(ackLink.replace(/^http:\/\/[^/]+/, BASE)); await ap.waitForSelector('#ack');
-await ap.screenshot({ path: join(OUT, 'e2e-5-acknowledge-page.png') });
+await ap.screenshot({ path: join(SHOTS, '16-acknowledge-1920-dark.png') });
 await ap.fill('#who', 'Maintenance Manager'); await ap.click('#ack'); await ap.waitForSelector('text=Nobody else will be emailed');
 await sleep(75000);   // longer than two further levels at 0.5 min spacing
 const after = (await sinkMsgs()).filter(m => /Level/.test(m.subject) && /MA2/.test(m.subject)).length;
@@ -181,19 +221,12 @@ ok('explained stop is in the downtime log once the machine restarts', dlRows.som
 issues = (await (await aget('/api/issues')).json()).issues;
 ok('the downtime issue resolved by itself when the machine ran again', issues.some(i => i.kind === 'downtime' && i.state === 'RESOLVED'));
 
-// ---------- 5. every page, both sizes, no console errors
-const nav = ['/', '/quality.html', '/escalations.html', '/history.html', '/sensors.html', '/qr.html', '/settings.html', '/users.html', '/account.html', '/about.html'];
-for (const [w, h, tag, ctxx] of [[1920, 1080, '1920', desk], [390, 844, '390', null]]) {
-  const c = ctxx || await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
-  if (!ctxx) await c.addCookies(await desk.cookies());
-  const pg = await c.newPage(); watch(pg, `page-${tag}`);
-  for (const path of nav) {
-    await pg.goto(BASE + path); await pg.waitForLoadState('networkidle'); await pg.waitForTimeout(700);
-    const overflow = await pg.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
-    if (tag === '390') ok(`no sideways scroll on ${path} at 390`, !overflow);
-    await pg.screenshot({ path: join(OUT, `page${path === '/' ? '-live' : path.replace('.html', '').replace('/', '-')}-${tag}.png`), fullPage: true });
-  }
-  if (!ctxx) await c.close();
+// ---------- 5. the sign-in screen, signed out ----------
+for (const th of ['dark', 'light']) for (const [w, kind] of SIZES) {
+  const c = await browser.newContext({ viewport: { width: w, height: kind === 'desk' ? 1080 : 844 }, deviceScaleFactor: kind === 'desk' ? 1 : 2 });
+  const pg = await c.newPage(); watch(pg, `login-${w}`);
+  await pg.goto(`${BASE}/login.html?theme=${th}`); await pg.waitForSelector('#f'); await pg.waitForTimeout(500);
+  await pg.screenshot({ path: join(SHOTS, `17-login-${w}-${th}.png`), fullPage: true }); await c.close();
 }
 
 // ---------- 6. exports

@@ -9,90 +9,7 @@
 import { db, iso } from './db.js';
 import { SHIFTS } from './config.js';
 
-db.exec(`
-  -- Downtime an operator logged by hand (or attributed from a sensor stop).
-  CREATE TABLE IF NOT EXISTS downtime_logs (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id    TEXT UNIQUE,            -- made by the phone, so a retry cannot double-log
-    machine_id   TEXT NOT NULL,
-    reason_code  TEXT NOT NULL,
-    reason_label TEXT NOT NULL,
-    planned      INTEGER NOT NULL DEFAULT 0,
-    started_at   TEXT NOT NULL,
-    ended_at     TEXT,
-    minutes      REAL NOT NULL,
-    shift        TEXT NOT NULL,
-    shift_day    TEXT NOT NULL,
-    note         TEXT,
-    event_id     INTEGER,                -- the sensor-detected stop this explains, if any
-    operator_id  INTEGER,
-    operator     TEXT,
-    logged_at    TEXT NOT NULL,
-    source       TEXT NOT NULL DEFAULT 'qr'
-  );
-  CREATE INDEX IF NOT EXISTS idx_dl_machine ON downtime_logs(machine_id, started_at);
-
-  CREATE TABLE IF NOT EXISTS defect_logs (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id   TEXT UNIQUE,
-    machine_id  TEXT NOT NULL,
-    qty         INTEGER NOT NULL,
-    type_code   TEXT NOT NULL,
-    type_label  TEXT NOT NULL,
-    shift       TEXT NOT NULL,
-    shift_day   TEXT NOT NULL,
-    note        TEXT,
-    photo       TEXT,                    -- file name inside data/photos
-    operator_id INTEGER,
-    operator    TEXT,
-    occurred_at TEXT NOT NULL,
-    logged_at   TEXT NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_df_machine ON defect_logs(machine_id, occurred_at);
-
-  -- Something that needs a person above the operator. One row per
-  -- issue; the ladder walks it up until somebody acknowledges.
-  CREATE TABLE IF NOT EXISTS issues (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    kind       TEXT NOT NULL,            -- downtime | defects | manual
-    machine_id TEXT NOT NULL,
-    summary    TEXT NOT NULL,
-    detail     TEXT,
-    source_key TEXT,                     -- stops the same cause opening twice
-    opened_at  TEXT NOT NULL,
-    state      TEXT NOT NULL DEFAULT 'OPEN',   -- OPEN | ACKED | RESOLVED
-    ack_token  TEXT NOT NULL,
-    acked_at   TEXT,
-    acked_by   TEXT,
-    resolved_at TEXT,
-    raised_by  TEXT
-  );
-  CREATE INDEX IF NOT EXISTS idx_issue_state ON issues(state);
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_issue_key ON issues(source_key) WHERE source_key IS NOT NULL;
-
-  -- Every email the ladder wants sent. Written FIRST, sent second, so a
-  -- dead network never loses a message: it waits here and retries.
-  CREATE TABLE IF NOT EXISTS mail_queue (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    issue_id        INTEGER,
-    level           INTEGER,
-    kind            TEXT NOT NULL,       -- escalation | recovered | test
-    role            TEXT,
-    to_addr         TEXT NOT NULL,
-    subject         TEXT NOT NULL,
-    body_text       TEXT NOT NULL,
-    body_html       TEXT,
-    created_at      TEXT NOT NULL,
-    status          TEXT NOT NULL DEFAULT 'queued',   -- queued | sent | failed
-    attempts        INTEGER NOT NULL DEFAULT 0,
-    next_attempt_at TEXT NOT NULL,
-    last_error      TEXT,
-    sent_at         TEXT,
-    message_id      TEXT
-  );
-  CREATE INDEX IF NOT EXISTS idx_mail_status ON mail_queue(status, next_attempt_at);
-  CREATE INDEX IF NOT EXISTS idx_mail_issue ON mail_queue(issue_id);
-`);
+// Tables for this file are created by migration 2 in migrate.js.
 
 // ---------- time ----------
 export const parse = (s) => new Date(String(s).replace(' ', 'T'));
@@ -223,8 +140,11 @@ export function qualitySummary({ machine, from, to }) {
 
   // Per shift-day, so a night shift is one bar and not two.
   const days = new Map();
-  const put = (day, k, v) => { const d = days.get(day) || { day, defects: 0, downtimeMin: 0 }; d[k] += v; days.set(day, d); };
-  for (const r of rows(`SELECT shift_day AS day, SUM(qty) AS v FROM defect_logs WHERE ${dfWhere} GROUP BY shift_day`)) put(r.day, 'defects', r.v);
+  const put = (day, k, v) => { const d = days.get(day) || { day, defects: 0, defectsA: 0, defectsB: 0, downtimeMin: 0 }; d[k] += v; days.set(day, d); };
+  for (const r of rows(`SELECT shift_day AS day, shift, SUM(qty) AS v FROM defect_logs WHERE ${dfWhere} GROUP BY shift_day, shift`)) {
+    put(r.day, 'defects', r.v);
+    const d = days.get(r.day); d['defects' + r.shift] = (d['defects' + r.shift] || 0) + r.v;
+  }
   for (const r of rows(`SELECT shift_day AS day, ROUND(SUM(minutes),1) AS v FROM downtime_logs WHERE ${dtWhere} GROUP BY shift_day`)) put(r.day, 'downtimeMin', r.v);
 
   return { from, to, machine: m, downtime, defects, series: [...days.values()].sort((a, b) => a.day.localeCompare(b.day)) };

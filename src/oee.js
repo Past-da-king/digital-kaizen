@@ -22,7 +22,7 @@
 import { MACHINES, KAIZEN, SHIFTS } from './config.js';
 import { db, iso } from './db.js';
 import * as settings from './settings.js';
-import { dayOf, shiftOf } from './store.js';
+import { dayOf, shiftOf, parse } from './store.js';
 
 const r1 = (n) => (n == null ? null : Math.round(n * 1000) / 10);   // fraction -> percent, 1 decimal
 
@@ -163,4 +163,57 @@ export function trend({ machineId = null, days = 14, now = new Date() } = {}) {
     out.push({ day, ...(({ oee, availability, performance, quality }) => ({ oee, availability, performance, quality }))(c) });
   }
   return out;
+}
+
+// What the machine did across a window, as [[state, minutes], ...] for the floor-board
+// strip. States: r running, i idle (late cycle or starting up), d down, p planned stop
+// (a stop an operator logged as planned), o no data from the sensor.
+const STATE_OF = { 'RUNNING': 'r', 'CYCLE DELAY': 'i', 'LEARNING': 'i', 'DOWNTIME': 'd' };
+export function stateTimeline(machineId, from, to, now = new Date()) {
+  const end = new Date(Math.min(to.getTime(), now.getTime()));
+  if (end <= from) return { from: iso(from), to: iso(end), minutes: 0, segments: [] };
+  const rows = db.prepare(
+    `SELECT timestamp, ended_at, status FROM machine_events
+      WHERE machine_id = ? AND timestamp < ? AND (ended_at IS NULL OR ended_at > ?) ORDER BY timestamp, id`
+  ).all(machineId, iso(end), iso(from));
+
+  const a = from.getTime(), b = end.getTime();
+  const iv = [];                      // [startMs, endMs, state]
+  let last = 'o';
+  for (const r of rows) {
+    const st = STATE_OF[r.status] ?? last;       // a RECONNECT or restart marker keeps the state it interrupted
+    if (STATE_OF[r.status]) last = st;
+    const s0 = Math.max(parse(r.timestamp).getTime(), a);
+    const e0 = Math.min(r.ended_at ? parse(r.ended_at).getTime() : b, b);
+    if (e0 > s0) iv.push([s0, e0, st]);
+  }
+  // planned stops operators logged: they turn down time into planned time
+  const planned = db.prepare(
+    `SELECT started_at, ended_at, minutes FROM downtime_logs WHERE machine_id = ? AND planned = 1 AND started_at < ?`
+  ).all(machineId, iso(end)).map(r => {
+    const s0 = parse(r.started_at).getTime();
+    return [s0, r.ended_at ? parse(r.ended_at).getTime() : s0 + r.minutes * 60000];
+  }).filter(([, e0]) => e0 > a);
+
+  // cut the window at every boundary, then pick one state per piece
+  const cuts = new Set([a, b]);
+  for (const [s0, e0] of iv) { cuts.add(s0); cuts.add(e0); }
+  for (const [s0, e0] of planned) { if (s0 > a && s0 < b) cuts.add(s0); if (e0 > a && e0 < b) cuts.add(e0); }
+  const pts = [...cuts].sort((x, y) => x - y);
+  const segs = [];
+  for (let k = 0; k + 1 < pts.length; k++) {
+    const mid = (pts[k] + pts[k + 1]) / 2;
+    let st = iv.find(([s0, e0]) => mid >= s0 && mid < e0)?.[2] ?? 'o';
+    if (st === 'd' && planned.some(([s0, e0]) => mid >= s0 && mid < e0)) st = 'p';
+    const min = (pts[k + 1] - pts[k]) / 60000;
+    if (segs.length && segs.at(-1)[0] === st) segs.at(-1)[1] += min; else segs.push([st, min]);
+  }
+  return { from: iso(from), to: iso(end), minutes: Math.round((b - a) / 60000), segments: segs.map(([s, m]) => [s, Math.round(m * 100) / 100]) };
+}
+
+// The strip for every machine for the shift that is running now.
+export function shiftTimelines(now = new Date()) {
+  const cur = shiftOf(now);
+  const w = shiftWindow(cur.day, cur.shift);
+  return { shift: cur.shift, day: cur.day, from: iso(w.from), to: iso(w.to), machines: MACHINES.map(m => ({ machine_id: m.id, ...stateTimeline(m.id, w.from, w.to, now) })) };
 }

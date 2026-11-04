@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-04T10:11:58.245Z",
-  "passed": 41,
+  "at": "2026-11-04T11:29:19.839Z",
+  "passed": 61,
   "failed": 0,
   "results": [
     {
@@ -46,7 +46,7 @@
     {
       "name": "MA1 running: only Log defects (no downtime button)",
       "pass": true,
-      "extra": "Machine is running"
+      "extra": "RUNNING"
     },
     {
       "name": "defects saved from the phone",
@@ -109,6 +109,156 @@
       "extra": ""
     },
     {
+      "name": "no sideways scroll: 1-dashboard at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 1-dashboard at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 2-machine at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 2-machine at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 3-quality-and-oee at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 3-quality-and-oee at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 4-history at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 4-history at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 5-settings at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 5-settings at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 6-qr-machine-down at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 6-qr-machine-down at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 7-qr-machine-running at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 7-qr-machine-running at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 8-qr-log-downtime at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 8-qr-log-downtime at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 9-qr-log-defects at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 9-qr-log-defects at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 10-escalations at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 10-escalations at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 11-qr-labels at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 11-qr-labels at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 12-sensors at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 12-sensors at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 13-people at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 13-people at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 14-account at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 14-account at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 15-how-it-works at 390 dark",
+      "pass": true,
+      "extra": "0"
+    },
+    {
+      "name": "no sideways scroll: 15-how-it-works at 390 light",
+      "pass": true,
+      "extra": "0"
+    },
+    {
       "name": "downtime reason saved against the live stop",
       "pass": true,
       "extra": ""
@@ -121,7 +271,7 @@
     {
       "name": "acknowledging stopped the ladder (no more level mails)",
       "pass": true,
-      "extra": "before 4, after 4"
+      "extra": "before 6, after 6"
     },
     {
       "name": "the people already told got an acknowledged note",
@@ -131,60 +281,10 @@
     {
       "name": "explained stop is in the downtime log once the machine restarts",
       "pass": true,
-      "extra": "[[\"Material issue\",4.1]]"
+      "extra": "[[\"Material issue\",6.3]]"
     },
     {
       "name": "the downtime issue resolved by itself when the machine ran again",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on / at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /quality.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /escalations.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /history.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /sensors.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /qr.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /settings.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /users.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /account.html at 390",
-      "pass": true,
-      "extra": ""
-    },
-    {
-      "name": "no sideways scroll on /about.html at 390",
       "pass": true,
       "extra": ""
     },

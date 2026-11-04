@@ -192,7 +192,7 @@ Open http://192.120.0.7:4310 again to confirm it is running, then restart the se
 
 ## Step 8. Accounts, email and the QR labels
 
-New in 1.3.0. Follow **UPDATE-v1.3.md** for: making the first admin (`npm run admin -- "Name" email`), setting up the
+New in 1.3.0. Follow **UPDATE-v1.4.md** (and **UPDATING.md** for safe upgrades, rollback and every setting) for: making the first admin (`npm run admin -- "Name" email`), setting up the
 mail account for escalation emails, editing the ladder, and printing the QR labels (Labels page).
 
 ## Day to day
@@ -204,7 +204,7 @@ mail account for escalation emails, editing the ladder, and printing the QR labe
 | **Restart the app (Linux)** | `sudo systemctl restart digital-kaizen` |
 | **Back up the data** | Copy the `data` folder. It holds the database and the password. |
 | **Move to a new server** | Install as above, then copy the old `data` folder and `.env` file across before starting. |
-| **Update to a new version** | In the app folder: `git pull`, then `npm install --omit=dev`, then restart the app. Without internet: unzip the new offline zip over the old folder. The `data` folder and `.env` are kept. |
+| **Update to a new version** | Read **UPDATING.md**. In short: copy `data` and `.env` aside, `git pull` and `npm install --omit=dev` (or unzip the offline zip over the old folder), `node scripts/upgrade.js --check` (a dry run on a copy that must say OK), then restart. The app backs up the database by itself before upgrading it; `node scripts/rollback.js latest` undoes an upgrade. |
 | **Remove it (Windows)** | In admin PowerShell: `Unregister-ScheduledTask -TaskName "Digital Kaizen" -Confirm:$false`, then delete the folder. |
 | **Remove it (Linux)** | `sudo systemctl disable --now digital-kaizen`, then delete the folder. |
 

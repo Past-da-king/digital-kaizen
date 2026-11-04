@@ -51,38 +51,7 @@ const LIMITS = {
   inviteH: 72,
 };
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    email       TEXT UNIQUE,
-    name        TEXT NOT NULL,
-    role        TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'invited',   -- invited | active | disabled
-    pw_hash     TEXT,
-    totp_secret TEXT,                               -- encrypted
-    totp_on     INTEGER NOT NULL DEFAULT 0,
-    totp_last   INTEGER NOT NULL DEFAULT 0,         -- last accepted 30s step, stops replays
-    recovery    TEXT,                               -- JSON array of hashes
-    pin_lookup  TEXT,
-    failed      INTEGER NOT NULL DEFAULT 0,
-    locked_until TEXT,
-    created_at  TEXT NOT NULL,
-    last_login  TEXT
-  );
-  CREATE TABLE IF NOT EXISTS invites (
-    token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, kind TEXT NOT NULL,
-    expires_at TEXT NOT NULL, used_at TEXT
-  );
-  CREATE TABLE IF NOT EXISTS sessions (
-    id_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, kind TEXT NOT NULL,   -- staff | pending
-    created_at TEXT NOT NULL, last_seen TEXT NOT NULL, expires_at TEXT NOT NULL, ip TEXT, ua TEXT
-  );
-  CREATE TABLE IF NOT EXISTS auth_attempts (key TEXT NOT NULL, at INTEGER NOT NULL);
-  CREATE INDEX IF NOT EXISTS idx_attempts ON auth_attempts(key, at);
-  CREATE TABLE IF NOT EXISTS auth_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, user_id INTEGER, who TEXT, event TEXT NOT NULL, ip TEXT, detail TEXT
-  );
-`);
+// The tables are created by migration 2 in migrate.js.
 
 // ---------- key material (kept beside the database, not inside it) ----------
 const KEYFILE = process.env.DK_KEYFILE || fileURLToPath(new URL('../data/keystore.key', import.meta.url));

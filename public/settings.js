@@ -19,11 +19,11 @@ const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
 function draw() {
   $('#sets').innerHTML = `
-  <section class="card full"><div class="card-h"><h2>Escalation ladder</h2><div class="spacer"></div>
+  <section class="card"><div class="card-h"><h2>Escalation ladder</h2><div class="spacer"></div>
       <label class="chip" style="cursor:pointer"><input type="checkbox" id="escOn" ${S.escalationEnabled ? 'checked' : ''}> Escalation emails on</label></div>
     <div class="bd">
       <p class="note" style="margin:0 0 14px">When an issue opens (a machine down past the limit or too many defects in a shift) the people at each level are emailed at the time set for that level, until someone acknowledges. The five rows below are only a starting example: change, add or remove anything.</p>
-      <div id="levels">${S.ladder.map(levelHtml).join('')}</div>
+      <div id="levels" class="ladder">${S.ladder.map(levelHtml).join('')}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><button class="ghost" id="addLevel">Add a level</button>
         <span class="field" style="flex-direction:row;align-items:center;gap:8px"><button class="ghost" id="spread">Space levels every</button><input type="number" id="every" value="30" min="1" style="width:84px;height:40px"><span class="part">minutes</span></span></div>
     </div></section>
@@ -59,7 +59,7 @@ function draw() {
   <section class="card"><div class="card-h"><h2>Moulds and ideal cycle time</h2></div><div class="bd">
     <p class="note" style="margin:0 0 12px">Performance in OEE is measured against the <b>ideal cycle</b> of the mould that is running. Set the one in use as active.</p>
     ${Object.entries(S.machines).map(([id, spec]) => `<div style="margin-bottom:16px" data-mach="${id}"><div class="sect">${id}</div>
-      ${spec.moulds.map((m, i) => `<div class="person" style="grid-template-columns:auto 1.4fr 1fr 1fr auto;padding:8px 0;border:0" data-mould="${i}"><label class="chip" style="cursor:pointer"><input type="radio" name="act-${id}" ${spec.activeMould === i ? 'checked' : ''}> active</label>
+      ${spec.moulds.map((m, i) => `<div class="mouldrow" data-mould="${i}"><label class="chip" style="cursor:pointer"><input type="radio" name="act-${id}" ${spec.activeMould === i ? 'checked' : ''}> active</label>
         <input value="${esc(m.name)}" placeholder="mould name"><input type="number" step="0.1" value="${m.idealCycleSec}" title="ideal cycle seconds"><input type="number" value="${m.cavities}" title="cavities"><button class="ghost sm" data-delmould="${id}:${i}">Remove</button></div>`).join('')}
       <div class="part" style="margin:0 0 6px">name, ideal cycle (s), cavities</div><button class="ghost sm" data-addmould="${id}">Add a mould</button></div>`).join('')}
   </div></section>
@@ -77,24 +77,26 @@ function draw() {
     <div class="field"><label>How phones and email links reach this PC</label><input id="baseUrl" placeholder="${esc(guess)}" value="${esc(S.baseUrl)}"><span class="help">Leave blank to use ${esc(guess)}. It goes in the QR codes and in the acknowledge link in every email.</span></div>
   </div></section>
 
-  <div class="card full sticky-save"><div class="form-actions"><button id="save">Save settings</button><span id="saved" class="part"></span></div></div>`;
+  <div class="card sticky-save"><div class="form-actions"><button id="save">Save settings</button><span id="saved" class="part"></span></div></div>`;
+  const names = ['Escalation ladder', 'Limits', 'Email', 'Downtime reasons', 'Defect types', 'Moulds', 'Operators', 'Address'];
+  $$('#sets > section').forEach((sec, i) => { sec.id = 'sec' + i; });
+  $('#setnav').innerHTML = names.map((n, i) => `<a href="#sec${i}" class="${i === 0 ? 'on' : ''}">${n}</a>`).join('');
 }
 
 function levelHtml(st, i, all) {
-  return `<div class="level" data-l="${i}"><div class="lh"><span class="num">${st.level}</span>
-      <span class="when">told after <input type="number" min="0" value="${st.afterMin}" class="lmin"> minutes</span><div class="spacer"></div>
+  return `<div class="lv" data-l="${i}"><span class="dot">${st.level}</span><div class="box"><div class="hd"><span>Told after</span><input type="number" min="0" value="${st.afterMin}" class="lmin"><span>minutes</span><div class="spacer"></div>
       <button class="ghost sm" data-up="${i}" ${i === 0 ? 'disabled' : ''}>Up</button><button class="ghost sm" data-down="${i}" ${i === all.length - 1 ? 'disabled' : ''}>Down</button>
       <button class="ghost sm" data-dellevel="${i}">Remove level</button></div>
-    ${st.people.map((p, j) => `<div class="person ${p.enabled ? '' : 'off'}" data-p="${j}"><input class="pn" placeholder="Name" value="${esc(p.name)}"><input class="pr" placeholder="Role, e.g. Supervisor" value="${esc(p.role)}"><input class="pe" type="email" placeholder="email address" value="${esc(p.email)}">
+    ${st.people.map((p, j) => `<div class="pp ${p.enabled ? '' : 'off'}" data-p="${j}"><input class="pn" placeholder="Name" value="${esc(p.name)}"><input class="pr" placeholder="Role, e.g. Supervisor" value="${esc(p.role)}"><input class="pe" type="email" placeholder="email address" value="${esc(p.email)}">
       <label class="chip" style="cursor:pointer"><input type="checkbox" class="pon" ${p.enabled ? 'checked' : ''}> on</label><button class="ghost sm" data-delp="${i}:${j}">Remove</button></div>`).join('')}
-    <div style="padding:10px 16px"><button class="ghost sm" data-addp="${i}">Add a person to level ${st.level}</button></div></div>`;
+    <div style="padding:10px 16px"><button class="ghost sm" data-addp="${i}">Add a person to level ${st.level}</button></div></div></div>`;
 }
 
 // read the form back into plain data
 function readLadder() {
-  return $$('#levels .level').map(l => ({
+  return $$('#levels .lv').map(l => ({
     afterMin: num($('.lmin', l).value),
-    people: $$('.person', l).map(p => ({ name: $('.pn', p).value, role: $('.pr', p).value, email: $('.pe', p).value, enabled: $('.pon', p).checked })),
+    people: $$('.pp', l).map(p => ({ name: $('.pn', p).value, role: $('.pr', p).value, email: $('.pe', p).value, enabled: $('.pon', p).checked })),
   }));
 }
 function readAll() {

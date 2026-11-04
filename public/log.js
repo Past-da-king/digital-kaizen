@@ -82,21 +82,18 @@ const state = () => ctx.state;
 const chosenOp = () => ctx.operators.find(o => String(o.id) === store.op) || null;
 
 // ---------- screens ----------
-function header() {
-  return `<div class="lh"><div class="m"><h1>${esc(ctx.machine.name)}</h1><div class="s">Shift ${esc(ctx.shift)} &middot; ${esc(ctx.serverTime.slice(11, 16))}${ctx.machine.part ? ' &middot; ' + esc(ctx.machine.part) : ''}</div></div>
-    <button class="iconbtn ghost" id="themeBtn" aria-label="Light or dark">${theme() === 'dark' ? ICON.sun : ICON.moon}</button></div>`;
+function hd(form) {
+  const s = state();
+  const cls = s === 'running' ? 'st-run' : s === 'down' ? 'st-down' : 'st-off';
+  const word = s === 'running' ? 'Running' : s === 'down' ? 'Down' : 'No sensor';
+  const e = ctx.event;
+  const sub = s === 'running' ? 'Found bad parts? Log them below.'
+    : s === 'down' ? `${e ? 'Stopped at ' + esc(hm(e.started_at)) + ' &middot; <b id="el">' + esc(e.elapsed_human) + '</b>. ' : ''}Tell us why it stopped.`
+    : 'We cannot see this machine right now, so you can log either.';
+  return `<div class="hd ${cls}"><div class="m"><span>Shift ${esc(ctx.shift)} &middot; ${esc(ctx.serverTime.slice(11, 16))}</span><button class="iconbtn" id="themeBtn" aria-label="Light or dark">${theme() === 'dark' ? ICON.sun : ICON.moon}</button></div>
+    <div class="mn">${esc(ctx.machine.name)}</div>${form ? `<h1>${esc(form)}</h1>` : `<div class="w">${word}</div><div class="s">${sub}</div>`}</div>`;
 }
 function bindTheme() { const b = document.getElementById('themeBtn'); if (b) b.onclick = () => { setTheme(theme() === 'dark' ? 'light' : 'dark'); render(); }; }
-
-function stateBar() {
-  const s = state();
-  if (s === 'running') return `<div class="statebar run"><span class="sig"></span><div><div class="big">Machine is running</div><div class="sm">Nothing to log as downtime. Found bad parts? Log them below.</div></div></div>`;
-  if (s === 'down') {
-    const e = ctx.event;
-    return `<div class="statebar down"><span class="sig"></span><div><div class="big">Machine is down${e ? ' for <span id="el">' + esc(e.elapsed_human) + '</span>' : ''}</div><div class="sm">${e ? 'Stopped at ' + esc(hm(e.started_at)) + '. ' : ''}Tell us why it stopped.</div></div></div>`;
-  }
-  return `<div class="statebar unknown"><span class="sig"></span><div><div class="big">No sensor reading</div><div class="sm">We cannot see this machine right now, so you can log either.</div></div></div>`;
-}
 
 function namePicker() {
   if (!ctx.operators.length) return '';
@@ -115,9 +112,8 @@ function recent() {
 function home() {
   const s = state();
   const pend = outbox().length;
-  app.innerHTML = `${header()}
+  app.innerHTML = `${hd()}<div class="body">
     ${pend ? `<div class="pending">${pend} entr${pend > 1 ? 'ies are' : 'y is'} saved on this phone and will send when the Wi-Fi is back.</div>` : ''}
-    ${stateBar()}
     ${ctx.unexplained.length && s !== 'down' ? `<div class="unexplained"><b>The machine stopped ${esc(ctx.unexplained[0].duration_human)} at ${esc(hm(ctx.unexplained[0].started_at))}.</b><div class="fsub" style="margin:4px 0 0">Nobody has said why yet.</div>
       <button data-explain="${ctx.unexplained[0].id}">Say why it stopped</button></div>` : ''}
     ${namePicker()}
@@ -126,7 +122,7 @@ function home() {
       ${s !== 'running' ? `<button class="act dt" data-go="downtime"><span class="ic">${ICON.stop}</span><span><b>Log downtime</b><span>${s === 'down' ? 'Why did it stop? Pick a reason' : 'A stop you want to record'}</span></span></button>` : ''}
       <button class="act df" data-go="defects"><span class="ic">${ICON.defect}</span><span><b>Log defects</b><span>How many, what type${ctx.defectsThisShift ? ` &middot; ${n0(ctx.defectsThisShift)} this shift` : ''}</span></span></button>
     </div>
-    ${recent()}`;
+    ${recent()}</div>`;
   bindTheme();
   app.querySelectorAll('[data-op]').forEach(b => b.onclick = () => { store.op = store.op === b.dataset.op ? '' : b.dataset.op; render(); });
   app.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
@@ -158,8 +154,7 @@ function needName() {
 // ---- defects
 function defectsForm() {
   const t = ctx.defectTypes;
-  app.innerHTML = `<button class="back" id="back">&larr; Back</button>
-    <div class="ftitle">Log defects</div><div class="fsub">${esc(ctx.machine.name)} &middot; shift ${esc(form.shift)}</div>
+  app.innerHTML = `${hd('Log defects')}<button class="back" id="back">&larr; Back</button><div class="body">
     <div class="q">How many?</div>
     <div class="stepper"><button id="minus" aria-label="One less">&minus;</button><input id="count" type="number" inputmode="numeric" min="1" max="100000" value="${form.count}"><button id="plus" aria-label="One more">+</button></div>
     <div class="quick">${[1, 5, 10, 25, 50].map(n => `<button data-add="${n}">+${n}</button>`).join('')}</div>
@@ -170,7 +165,7 @@ function defectsForm() {
     <div class="q">Note and photo (optional)</div>
     <textarea class="note" id="note" placeholder="Cavity, batch, anything useful">${esc(form.note || '')}</textarea>
     <div class="photo"><button class="pbtn ghost" id="pbtn">${ICON.cam}&nbsp; ${form.photo ? 'Change photo' : 'Add photo'}</button>${form.photo ? `<img src="${form.photoUrl}" alt="photo">` : ''}
-      <input type="file" id="pfile" accept="image/*" capture="environment" class="hidden"></div>
+      <input type="file" id="pfile" accept="image/*" capture="environment" class="hidden"></div></div>
     <div class="foot"><div class="in"><div class="err" id="err"></div><button class="go-df" id="send">Save defects</button></div></div>`;
   wireCommon();
   const count = document.getElementById('count');
@@ -217,8 +212,7 @@ function downtimeForm() {
   const e = form.fromEvent || (form.eventId && ctx.event?.id === form.eventId);
   const ev = form.fromEvent ? ctx.unexplained.find(u => u.id === form.eventId) : ctx.event;
   const R = ctx.reasons;
-  app.innerHTML = `<button class="back" id="back">&larr; Back</button>
-    <div class="ftitle">Log downtime</div><div class="fsub">${esc(ctx.machine.name)}${ev ? ` &middot; stopped ${hm(ev.started_at)}` : ''}</div>
+  app.innerHTML = `${hd('Log downtime')}<button class="back" id="back">&larr; Back</button><div class="body">
     <div class="q">Why did it stop?</div>
     <div class="grid2">${R.map(r => `<button class="opt ${form.reasonCode === r.code ? 'sel' : ''}" data-reason="${r.code}">${esc(r.label)}${r.planned ? '<small>planned</small>' : ''}</button>`).join('')}</div>
     ${e ? `<div class="warn">The sensor recorded this stop, so the time is filled in for you.</div>` : `
@@ -231,7 +225,7 @@ function downtimeForm() {
       <div class="seg2" style="grid-template-columns:repeat(3,1fr)">${[[0, 'Just now'], [30, '30 min ago'], [60, '1 h ago']].map(([v, l]) => `<button class="${form.endedAgo === v ? 'sel' : ''}" data-ago="${v}" style="font-size:16px">${l}</button>`).join('')}</div>
       <button class="ghost sm" id="useClock" style="margin-top:10px">Enter start and end times instead</button>`}`}
     <div class="q">Note (optional)</div>
-    <textarea class="note" id="note" placeholder="What happened?">${esc(form.note || '')}</textarea>
+    <textarea class="note" id="note" placeholder="What happened?">${esc(form.note || '')}</textarea></div>
     <div class="foot"><div class="in"><div class="err" id="err"></div><button class="go-dt" id="send">Save downtime</button></div></div>`;
   wireCommon();
   app.querySelectorAll('[data-reason]').forEach(b => b.onclick = () => { form.reasonCode = b.dataset.reason; keepNote(); downtimeForm(); });

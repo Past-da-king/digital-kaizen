@@ -1,28 +1,22 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Digital Kaizen: Quality</title>
+<title>Digital Kaizen: Quality and OEE</title>
 <link rel="stylesheet" href="/style.css">
 </head><body>
-<header class="top"></header>
 <main>
-  <div class="page-title"><h1>Quality and downtime</h1><p>What operators logged at the machines.</p></div>
-  <div class="controls">
-    <div class="field"><label>Machine</label><select id="machine"></select></div>
-    <div class="field"><label>From</label><input type="date" id="from"></div>
-    <div class="field"><label>To</label><input type="date" id="to"></div>
-    <button id="go">Show</button>
-    <a class="btn ghost" id="csvDt" href="#">Downtime CSV</a><a class="btn ghost" id="csvDf" href="#">Defects CSV</a>
-  </div>
-  <div class="stats" id="kpis"></div>
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))">
-    <section class="card"><div class="card-h"><h2>Downtime by reason</h2></div><div class="bd"><div id="reasons"></div></div></section>
-    <section class="card"><div class="card-h"><h2>Defects by type</h2></div><div class="bd"><div id="types"></div></div></section>
-    <section class="card"><div class="card-h"><h2>Defects per day</h2></div><div class="bd"><div id="defDays"></div></div></section>
-    <section class="card"><div class="card-h"><h2>Logged downtime per day (minutes)</h2></div><div class="bd"><div id="dtDays"></div></div></section>
-    <section class="card"><div class="card-h"><h2>Defect log</h2></div><div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>When</th><th>Machine</th><th>Qty</th><th>Type</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="defRows"></tbody></table></div></div></section>
-    <section class="card"><div class="card-h"><h2>Downtime log</h2></div><div class="bd" style="padding:0"><div class="scroll"><table><thead><tr><th>Started</th><th>Machine</th><th>Min</th><th>Reason</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="dtRows"></tbody></table></div></div></section>
-  </div>
+  <div class="page-title"><h1>Quality and OEE</h1><p id="qsub">What the machines did and what operators logged.</p>
+    <div class="seg" id="rng"><button data-d="1">Today</button><button data-d="7">7 days</button><button data-d="14" class="on">14 days</button><button data-d="30">30 days</button></div>
+    <select id="machine" style="width:auto;min-width:150px;height:38px"></select>
+    <a class="btn ghost sm" id="csvDf" href="#">Defects CSV</a><a class="btn ghost sm" id="csvDt" href="#">Downtime CSV</a></div>
+  <div class="cols c12" id="top"></div>
+  <section class="card pad"><div class="card-h"><span class="eyebrow">OEE trend</span><span class="r" id="trendSub"></span></div><div id="trend"></div></section>
+  <div class="cols c12" id="par"></div>
+  <div class="cols c12" id="mid"></div>
+  <section class="card pad"><div class="card-h"><span class="eyebrow">Defect log</span><span class="r">newest first</span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>When</th><th>Machine</th><th>Qty</th><th>Type</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="defRows"></tbody></table></div></section>
+  <section class="card pad"><div class="card-h"><span class="eyebrow">Downtime log</span><span class="r">newest first</span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Started</th><th>Machine</th><th>Min</th><th>Reason</th><th>Shift</th><th>By</th><th>Note</th></tr></thead><tbody id="dtRows"></tbody></table></div></section>
 </main>
 <script type="module" src="/quality.js"></script>
 </body></html>

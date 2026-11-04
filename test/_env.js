@@ -10,4 +10,5 @@ process.env.DK_KEYFILE = join(dir, 'keystore.key');
 process.env.DK_SECRETS = join(dir, 'no-secrets.json');
 process.env.DK_PHOTOS = join(dir, 'photos');
 process.env.DK_WEB_PORT = '0';
+process.env.DK_QUIET = '1';
 for (const k of ['DK_SMTP_HOST', 'DK_MQTT_USER', 'DK_DASH_PASS', 'DK_BASE_URL']) delete process.env[k];

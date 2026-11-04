@@ -1,6 +1,6 @@
-// Shared pieces for every page: the theme, the header, number formatting and
-// the charts. Plain SVG drawn at the element's real width, so text stays
-// crisp on a phone and readable from across the factory floor.
+// Shared pieces for every page: the theme, the shell (sidebar on a PC, tab bar on
+// a phone, top bar), number formatting and the charts. Charts are plain HTML/CSS
+// where they can be, so they scale from a 390 px phone to a 1920 px wall screen.
 
 // ---------- theme: dark by default, light on request, remembered ----------
 const stored = () => { try { return localStorage.getItem('dk-theme'); } catch { return null; } };
@@ -20,7 +20,6 @@ export const n0 = (v) => (v == null ? '—' : Number(v).toLocaleString('en-GB'))
 export const n1 = (v) => (v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1));
 export const pct = (v) => (v == null ? '—' : `${n1(v)}`);
 export const tone = (v) => (v == null ? 'none' : v >= 85 ? 'good' : v >= 60 ? 'ok' : 'bad');
-export const toneVar = (t) => ({ good: 'var(--run)', ok: 'var(--idle)', bad: 'var(--down)', none: 'var(--off)' }[t]);
 export const hm = (iso) => String(iso || '').slice(11, 16);
 export const mins = (m) => (m == null ? '—' : m >= 60 ? `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, '0')} min` : `${Math.round(m)} min`);
 export const ago = (sec) => {
@@ -31,7 +30,9 @@ export const ago = (sec) => {
 
 export async function api(path, opts) {
   const r = await fetch(path, opts);
-  if (r.status === 401 && !path.startsWith('/api/auth') && !path.startsWith('/api/login') && !path.startsWith('/api/invite') && !path.startsWith('/api/ack')) { location.href = '/login.html'; return new Promise(() => {}); }
+  if (r.status === 401 && !path.startsWith('/api/auth') && !path.startsWith('/api/login') && !path.startsWith('/api/invite') && !path.startsWith('/api/ack')) {
+    location.href = '/login.html'; return new Promise(() => {});
+  }
   return r.json();
 }
 export const postJson = (path, body) => api(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
@@ -41,183 +42,156 @@ export function toast(msg, ms = 2600) {
   document.body.appendChild(t); setTimeout(() => t.remove(), ms);
 }
 
-// ---------- header ----------
-const ICON = {
-  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
-  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+// ---------- shell ----------
+const I = {
+  live: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>',
+  machine: '<svg viewBox="0 0 24 24"><path d="M3 18V9l5 3V9l5 3V6h4l4 3v9z"/><path d="M3 21h18"/></svg>',
+  quality: '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  history: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  qr: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h2v2h-2zM19 15h2v2M15 19h2v2M19 19h2v2"/></svg>',
+  sensor: '<svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0M8 12a4 4 0 0 1 8 0"/><circle cx="12" cy="12" r="1.3"/><path d="M12 14v7"/></svg>',
+  gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+  people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg>',
+  help: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17v.01"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>',
 };
+export const icon = I;
+// [href, label, icon, adminOnly]
 const NAV = [
-  ['/', 'Live floor'], ['/quality.html', 'Quality'], ['/escalations.html', 'Escalations'], ['/history.html', 'History'],
-  ['/sensors.html', 'Sensors', 'admin'], ['/qr.html', 'Labels'], ['/settings.html', 'Settings', 'admin'], ['/users.html', 'People', 'admin'],
+  ['Monitor', [['/', 'Live floor', 'live'], ['/machine.html', 'Machines', 'machine'], ['/quality.html', 'Quality and OEE', 'quality'], ['/history.html', 'History', 'history']]],
+  ['Manage', [['/escalations.html', 'Escalations', 'bell'], ['/qr.html', 'QR labels', 'qr'], ['/sensors.html', 'Sensors', 'sensor', true], ['/settings.html', 'Settings', 'gear', true], ['/users.html', 'People', 'people', true], ['/about.html', 'How it works', 'help']]],
 ];
+const TITLES = { '': '', '/account.html': 'My account' };
 
-export async function mountHeader({ active = '', clock = true, me = undefined, plant = 'Evernu Plastics', conn = clock } = {}) {
+export async function mountHeader({ active = '', clock = true, me = undefined, plant = 'Evernu Plastics', title = null, sub = null, conn = clock } = {}) {
   if (me === undefined) {
     try { me = (await fetch('/api/me').then(r => r.json())).user; } catch { me = null; }
   }
-  const el = $('header.top') || document.body.insertAdjacentElement('afterbegin', Object.assign(document.createElement('header'), { className: 'top' }));
-  const items = NAV.filter(([, , need]) => !need || !me || me.role === 'admin');
-  el.innerHTML = `
-    <a class="brand" href="/"><span class="mark">K</span><span>Digital Kaizen<small>${esc(plant)}</small></span></a>
-    <nav>${items.map(([href, label]) => `<a href="${href}" class="${href === active ? 'on' : ''}">${label}</a>`).join('')}</nav>
-    <div class="spacer"></div>
-    ${clock ? '<div class="clock" id="clock"></div>' : ''}
-    ${conn ? '<div class="conn"><span class="dot" id="dot"></span><span id="connText">connecting</span></div>' : ''}
-    <button class="iconbtn ghost" id="themeBtn" title="Light or dark" aria-label="Switch between light and dark"></button>
-    ${me ? `<div class="me" id="me"><button class="iconbtn ghost" id="meBtn" aria-label="Account">${ICON.user}</button>
-      <div class="menu"><div class="who"><b>${esc(me.name)}</b>${esc(me.role)}</div>
-      <a href="/account.html">Password and two-step</a><button class="item" id="signOut">Sign out</button></div></div>` : ''}`;
+  const main = $('main') || document.body.appendChild(document.createElement('main'));
+  $('header.top')?.remove();
 
-  const paint = () => { $('#themeBtn').innerHTML = theme() === 'dark' ? ICON.sun : ICON.moon; };
-  paint();
-  $('#themeBtn').onclick = () => { setTheme(theme() === 'dark' ? 'light' : 'dark'); paint(); window.dispatchEvent(new Event('themechange')); };
+  // the old page title block becomes the top bar: heading, sub line, and its buttons
+  const pt = $('.page-title', main);
+  let heading = title, subline = sub, acts = [];
+  if (pt) {
+    heading = heading ?? $('h1', pt)?.textContent;
+    subline = subline ?? $('p', pt)?.textContent;
+    acts = [...pt.children].filter(c => !['H1', 'P'].includes(c.tagName) && !c.classList.contains('spacer'));
+    pt.remove();
+  }
+  const flat = NAV.flatMap(([, items]) => items);
+  heading = heading || flat.find(([h]) => h === active)?.[1] || TITLES[active] || '';
+  const items = (list) => list.filter(([, , , admin]) => !admin || !me || me.role === 'admin');
+  const nav = (list, cls = 'nav') => items(list).map(([h, l, i]) => `<a class="${cls} ${h === active ? 'on' : ''}" href="${h}">${I[i]}<span>${l}</span>${h === '/escalations.html' ? '<span class="badge hidden" id="escBadge"></span>' : ''}</a>`).join('');
+  const th = theme();
+  const hour = new Date().getHours();
+
+  const shell = document.createElement('div');
+  shell.className = 'shell';
+  shell.innerHTML = `
+  <aside class="side"><a class="logo" href="/"><span class="m">K</span><div><b>Digital Kaizen</b><span>${esc(plant)}</span></div></a>
+    ${NAV.map(([g, list]) => `<div class="navgrp">${g}</div>${nav(list)}`).join('')}
+    <div class="foot"><button class="themebtn" data-theme-toggle>${th === 'dark' ? 'Switch to light' : 'Switch to dark'}</button>
+      ${me ? `<div class="who" id="who"><i>${esc(me.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase())}</i><div><b>${esc(me.name)}</b><span>${esc(me.role)}</span></div>
+        <div class="menu"><a href="/account.html">Password and two-step</a><button class="item" id="signOut">Sign out</button></div></div>` : ''}</div></aside>
+  <div class="main"><div class="topbar"><div><h1>${esc(heading)}</h1>${subline ? `<div class="sub">${esc(subline)}</div>` : ''}</div><div class="sp"></div>
+      <div class="acts" id="acts"></div>
+      ${conn ? '<span class="pill hide-m"><span class="d" id="dot"></span><span id="connText">connecting</span></span>' : ''}
+      ${clock ? `<span class="pill hide-m">Shift <b>${hour >= 6 && hour < 18 ? 'A' : 'B'}</b></span><div class="clock" id="clock"></div>` : ''}</div>
+    <div class="page" id="page"></div></div>
+  <nav class="tabbar">${[['/', 'Live', 'live'], ['/machine.html', 'Machines', 'machine'], ['/quality.html', 'OEE', 'quality'], ['/escalations.html', 'Alerts', 'bell']].map(([h, l, i]) => `<a class="${h === active ? 'on' : ''}" href="${h}">${I[i]}${l}</a>`).join('')}
+    <button class="more ${['/history.html', '/qr.html', '/sensors.html', '/settings.html', '/users.html', '/about.html', '/account.html'].includes(active) ? 'on' : ''}" id="moreBtn">${I.more}More</button></nav>
+  <div class="sheet-more" id="sheetMore">${nav([['/history.html', 'History', 'history'], ['/qr.html', 'QR labels', 'qr'], ['/sensors.html', 'Sensors', 'sensor', true], ['/settings.html', 'Settings', 'gear', true], ['/users.html', 'People', 'people', true], ['/about.html', 'How it works', 'help']])}
+    <button class="themebtn" data-theme-toggle>${th === 'dark' ? 'Switch to light' : 'Switch to dark'}</button>${me ? '<a class="nav" href="/account.html">Password and two-step</a><button class="themebtn" id="signOut2">Sign out</button>' : ''}</div>`;
+  const page = $('#page', shell);
+  document.body.prepend(shell);
+  page.appendChild(main);
+  // the old <main> wrapper just flows into the page grid
+  main.style.cssText = 'display:contents';
+  for (const a of acts) $('#acts', shell).appendChild(a);
+
+  const paint = () => $$('[data-theme-toggle]').forEach(b => { b.textContent = theme() === 'dark' ? 'Switch to light' : 'Switch to dark'; });
+  $$('[data-theme-toggle]').forEach(b => b.onclick = () => { setTheme(theme() === 'dark' ? 'light' : 'dark'); paint(); window.dispatchEvent(new Event('themechange')); });
+  $('#moreBtn').onclick = (e) => { e.stopPropagation(); $('#sheetMore').classList.toggle('open'); };
+  document.addEventListener('click', (e) => { if (!e.target.closest('#sheetMore')) $('#sheetMore').classList.remove('open'); });
   if (me) {
-    $('#meBtn').onclick = (e) => { e.stopPropagation(); $('#me').classList.toggle('open'); };
-    document.addEventListener('click', () => $('#me')?.classList.remove('open'));
-    $('#signOut').onclick = async () => { await postJson('/api/auth/logout'); location.href = '/login.html'; };
+    $('#who').onclick = (e) => { e.stopPropagation(); $('#who').classList.toggle('open'); };
+    document.addEventListener('click', () => $('#who')?.classList.remove('open'));
+    const out = async () => { await postJson('/api/auth/logout'); location.href = '/login.html'; };
+    $('#signOut').onclick = out; $('#signOut2').onclick = out;
   }
   if (clock) {
-    const tick = () => {
-      const d = new Date();
-      $('#clock').innerHTML = `${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}<small>${d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</small>`;
-    };
+    const tick = () => { $('#clock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
     tick(); setInterval(tick, 10000);
   }
+  // the open-issue count on the Escalations link
+  fetch('/api/escalation').then(r => r.ok ? r.json() : null).then(e => {
+    const n = e?.open?.length || 0;
+    if (n) $$('#escBadge').forEach(b => { b.textContent = n; b.classList.remove('hidden'); });
+  }).catch(() => {});
   return me;
 }
 
 export function live(on, text) {
   const d = $('#dot'), t = $('#connText'); if (!d) return;
-  d.classList.toggle('live', on); t.textContent = text || (on ? 'live' : 'reconnecting');
+  d.classList.toggle('live', on); t.textContent = text || (on ? 'Live' : 'Reconnecting');
 }
 
 // ---------- charts ----------
-const FONT = 'font-family="Segoe UI Variable Text,Segoe UI,system-ui,sans-serif"';
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const widthOf = (el) => Math.max(260, Math.round(el.clientWidth || el.parentElement?.clientWidth || 600));
-const niceMax = (m) => { if (m <= 5) return 5; const p = 10 ** Math.floor(Math.log10(m)); const f = m / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
 
-const redraws = new Set();
-export function chart(el, draw) {
-  const go = () => { try { el.innerHTML = draw(widthOf(el)); } catch (e) { el.textContent = ''; console.error(e); } };
-  go(); redraws.add(go);
-  return go;
-}
-window.addEventListener('resize', () => redraws.forEach(f => f()));
-window.addEventListener('themechange', () => redraws.forEach(f => f()));
-
-export function ring({ value, size = 220, stroke = 18, label = 'OEE', color }) {
-  const r = (100 - stroke) / 2, c = 2 * Math.PI * r;
-  const t = tone(value), col = color || toneVar(t);
-  const frac = value == null ? 0 : Math.max(0, Math.min(100, value)) / 100;
-  return `<div class="ring" style="--size:${size}px"><svg viewBox="0 0 100 100" role="img" aria-label="${label} ${value ?? 'no data'}">
-    <circle class="track" cx="50" cy="50" r="${r}" fill="none" stroke-width="${stroke}"/>
-    <circle cx="50" cy="50" r="${r}" fill="none" stroke-width="${stroke}" stroke-linecap="round" style="stroke:${col}" stroke-dasharray="${(c * frac).toFixed(2)} ${c.toFixed(2)}"/></svg>
-    <div class="num"><b>${value == null ? '—' : Math.round(value)}${value == null ? '' : '<small>%</small>'}</b><span>${label}</span></div></div>`;
+// tiny line, no axes: for KPI tiles. values may contain null.
+export function spark(values, { color = 'var(--brand)', h = 34 } = {}) {
+  const v = values.filter(x => x != null);
+  if (v.length < 2) return `<svg class="spark" viewBox="0 0 100 ${h}"></svg>`;
+  const max = Math.max(...v), min = Math.min(...v), W = 100;
+  const pts = values.map((x, i) => x == null ? null : [i / (values.length - 1) * W, h - 3 - ((x - min) / (max - min || 1)) * (h - 8)]);
+  let d = '', run = false;
+  pts.forEach(p => { if (!p) { run = false; return; } d += `${run ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`; run = true; });
+  return `<svg class="spark" viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" style="color:${color}"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}L${W},${h}L0,${h}Z" fill="currentColor" opacity=".1"/></svg>`;
 }
 
-export function factorBar(label, v, hint = '') {
-  const t = tone(v);
-  return `<div class="factor tone-${t}"><span class="k">${label}</span><span class="v">${v == null ? '—' : Math.round(v * 10) / 10}${v == null ? '' : '<small>%</small>'}</span>
-    <div class="bar" title="${esc(hint)}"><i style="width:${v == null ? 0 : Math.max(2, Math.min(100, v))}%"></i></div></div>`;
+// what a machine did: segments [[state, minutes], ...] with state r i d p o
+export function timeline(segs) {
+  const t = segs.reduce((a, s) => a + s[1], 0) || 1;
+  return `<div class="tl">${segs.map(([s, m]) => `<i class="${s}" style="flex:${m / t}"></i>`).join('')}</div>`;
 }
 
-// A line over days. points: [{label, value}] (value may be null). Optional target line.
-export function lineChart(el, points, { h = 220, max = 100, min = 0, target = null, unit = '%', color = 'var(--accent)', second = null } = {}) {
-  return chart(el, (W) => {
-    const padL = 40, padR = 14, padT = 14, padB = 30;
-    if (!points.length) return `<svg width="${W}" height="60"><text x="0" y="34" ${FONT} font-size="14" fill="${css('--faint')}">Nothing logged yet</text></svg>`;
-    const x = (i) => padL + (points.length === 1 ? (W - padL - padR) / 2 : (i / (points.length - 1)) * (W - padL - padR));
-    const y = (v) => padT + (1 - (v - min) / (max - min)) * (h - padT - padB);
-    const grid = [0, .25, .5, .75, 1].map(f => { const v = min + (max - min) * f; return `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="${css('--line')}"/><text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" ${FONT} font-size="12" fill="${css('--faint')}">${Math.round(v)}${f === 1 ? unit : ''}</text>`; }).join('');
-    const seg = (pts, col, area) => {
-      let out = '', run = [];
-      const flush = () => {
-        if (!run.length) return;
-        const d = run.map((r, k) => `${k ? 'L' : 'M'}${x(r.i).toFixed(1)},${y(r.v).toFixed(1)}`).join('');
-        if (area && run.length > 1) out += `<path d="${d}L${x(run[run.length - 1].i).toFixed(1)},${y(min)}L${x(run[0].i).toFixed(1)},${y(min)}Z" fill="${col}" opacity=".12"/>`;
-        out += `<path d="${d}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
-        run = [];
-      };
-      pts.forEach((p, i) => { if (p.value == null) flush(); else run.push({ i, v: p.value }); });
-      flush();
-      return out;
-    };
-    const dots = points.map((p, i) => p.value == null ? '' : `<circle cx="${x(i)}" cy="${y(p.value)}" r="${i === points.length - 1 ? 5.5 : 3.5}" fill="${i === points.length - 1 ? color : css('--surface')}" stroke="${color}" stroke-width="2.5"><title>${esc(p.label)}: ${p.value}${unit}</title></circle>`).join('');
-    const every = Math.ceil(points.length / Math.max(2, Math.floor((W - padL) / 64)));
-    const labels = points.map((p, i) => i % every === 0 || i === points.length - 1 ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" ${FONT} font-size="12" fill="${css('--faint')}">${esc(p.label)}</text>` : '').join('');
-    const tl = target == null ? '' : `<line x1="${padL}" x2="${W - padR}" y1="${y(target)}" y2="${y(target)}" stroke="${css('--run')}" stroke-dasharray="5 5" opacity=".7"/><text x="${W - padR}" y="${y(target) - 6}" text-anchor="end" ${FONT} font-size="12" fill="${css('--run')}">target ${target}${unit}</text>`;
-    return `<svg width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" role="img">${grid}${tl}${seg(points, color, true)}${second ? seg(second, 'var(--idle)', false) : ''}${dots}${labels}</svg>`;
-  });
+export function hbars(items, { unit = '', color = 'var(--plan)', empty = 'Nothing logged yet' } = {}) {
+  if (!items.length) return `<div class="part" style="padding:8px 0">${esc(empty)}</div>`;
+  const max = Math.max(...items.map(i => i.v), 1);
+  return `<div class="hb">${items.map(i => `<div class="r"><span class="n" title="${esc(i.n)}">${esc(i.n)}</span><span class="t"><i style="width:${Math.max(2, (i.v / max) * 100)}%;--c:${i.c || color}"></i></span><span class="v">${n1(i.v).replace(/\.0$/, '')}${unit}</span></div>`).join('')}</div>`;
 }
 
-// Vertical bars. points: [{label, value}]
-export function barChart(el, points, { h = 170, color = 'var(--accent)', empty = 'Nothing yet', fmt = (v) => v } = {}) {
-  return chart(el, (W) => {
-    if (!points.length) return `<svg width="${W}" height="44"><text x="0" y="28" ${FONT} font-size="14" fill="${css('--faint')}">${esc(empty)}</text></svg>`;
-    const padL = 36, padB = 24, padT = 8, max = niceMax(Math.max(1, ...points.map(p => p.value)));
-    const bw = (W - padL) / points.length, y = (v) => h - padB - (v / max) * (h - padB - padT);
-    const grid = [0, .5, 1].map(f => `<line x1="${padL}" x2="${W}" y1="${y(max * f)}" y2="${y(max * f)}" stroke="${css('--line')}"/><text x="0" y="${y(max * f) + 4}" ${FONT} font-size="12" fill="${css('--faint')}">${Math.round(max * f)}</text>`).join('');
-    const bars = points.map((p, i) => `<rect x="${(padL + i * bw + bw * .14).toFixed(1)}" y="${y(p.value).toFixed(1)}" width="${(bw * .72).toFixed(1)}" height="${Math.max(1.5, h - padB - y(p.value)).toFixed(1)}" rx="4" fill="${p.color || color}"><title>${esc(p.label)}: ${fmt(p.value)}</title></rect>`).join('');
-    const every = Math.ceil(points.length / Math.max(2, Math.floor((W - padL) / 52)));
-    const labels = points.map((p, i) => i % every === 0 ? `<text x="${(padL + i * bw + bw / 2).toFixed(1)}" y="${h - 6}" text-anchor="middle" ${FONT} font-size="12" fill="${css('--faint')}">${esc(p.label)}</text>` : '').join('');
-    return `<svg width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" role="img">${grid}${bars}${labels}</svg>`;
-  });
+// vertical columns (HTML). cols: [{l, parts:[[value, colour]]}]
+export function columns(cols, { h = 150, every = 1, empty = 'Nothing yet' } = {}) {
+  const tot = (c) => c.parts.reduce((a, p) => a + p[0], 0);
+  if (!cols.length || !cols.some(c => tot(c) > 0)) return `<div class="part" style="padding:8px 0">${esc(empty)}</div>`;
+  const max = Math.max(...cols.map(tot), 1);
+  return `<div style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,64px);justify-content:space-between;gap:6px;align-items:end;height:${h}px;border-bottom:1px solid var(--line)">${cols.map(c => `<div title="${esc(c.l)}: ${tot(c)}" style="display:flex;flex-direction:column-reverse;gap:2px;height:100%;justify-content:flex-start">${c.parts.map(p => `<i style="display:block;height:${(p[0] / max) * 100}%;background:${p[1]};border-radius:3px"></i>`).join('')}</div>`).join('')}</div>
+    <div style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,64px);justify-content:space-between;gap:6px;margin-top:6px;font-size:11px;color:var(--faint);text-align:center">${cols.map((c, i) => `<span>${i % every === 0 ? esc(c.l) : ''}</span>`).join('')}</div>`;
 }
 
-// Horizontal bars with the label and value on each row. items: [{label, value, color, note}]
-export function hbars(el, items, { unit = '', empty = 'Nothing logged yet' } = {}) {
-  return chart(el, (W) => {
-    if (!items.length) return `<svg width="${W}" height="44"><text x="0" y="28" ${FONT} font-size="14" fill="${css('--faint')}">${esc(empty)}</text></svg>`;
-    const rowH = 40, max = Math.max(...items.map(i => i.value), 1), labelW = Math.min(230, W * .42), valW = 74;
-    const bw = W - labelW - valW - 8;
-    const rows = items.map((it, i) => {
-      const y = i * rowH, w = Math.max(3, (it.value / max) * bw);
-      return `<text x="0" y="${y + 24}" ${FONT} font-size="15" fill="${css('--ink')}">${esc(it.label.length > 28 ? it.label.slice(0, 27) + '…' : it.label)}</text>
-        <rect x="${labelW}" y="${y + 9}" width="${bw}" height="16" rx="8" fill="${css('--sunken')}"/>
-        <rect x="${labelW}" y="${y + 9}" width="${w.toFixed(1)}" height="16" rx="8" fill="${it.color || 'var(--accent)'}"><title>${esc(it.label)}: ${it.value}${unit}</title></rect>
-        <text x="${W}" y="${y + 24}" text-anchor="end" ${FONT} font-size="15" font-weight="700" fill="${css('--ink')}">${n1(it.value)}${unit}</text>`;
-    }).join('');
-    return `<svg width="${W}" height="${items.length * rowH}" viewBox="0 0 ${W} ${items.length * rowH}" role="img">${rows}</svg>`;
-  });
-}
-
-// Stacked columns, one per day. days: [{label, parts:[{key, value}]}], colours: {key: css colour}
-export function stacked(el, days, colours, { h = 200, empty = 'Nothing logged yet' } = {}) {
-  return chart(el, (W) => {
-    const tot = (d) => d.parts.reduce((a, p) => a + p.value, 0);
-    if (!days.length || !days.some(d => tot(d) > 0)) return `<svg width="${W}" height="44"><text x="0" y="28" ${FONT} font-size="14" fill="${css('--faint')}">${esc(empty)}</text></svg>`;
-    const padL = 36, padB = 24, padT = 8, max = niceMax(Math.max(...days.map(tot)));
-    const bw = (W - padL) / days.length, y = (v) => h - padB - (v / max) * (h - padB - padT);
-    const grid = [0, .5, 1].map(f => `<line x1="${padL}" x2="${W}" y1="${y(max * f)}" y2="${y(max * f)}" stroke="${css('--line')}"/><text x="0" y="${y(max * f) + 4}" ${FONT} font-size="12" fill="${css('--faint')}">${Math.round(max * f)}</text>`).join('');
-    const cols = days.map((d, i) => {
-      let acc = 0;
-      return d.parts.filter(p => p.value > 0).map(p => {
-        const y1 = y(acc + p.value), y0 = y(acc); acc += p.value;
-        return `<rect x="${(padL + i * bw + bw * .16).toFixed(1)}" y="${y1.toFixed(1)}" width="${(bw * .68).toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${colours[p.key] || 'var(--off)'}"><title>${esc(d.label)} ${esc(p.key)}: ${p.value}</title></rect>`;
-      }).join('');
-    }).join('');
-    const every = Math.ceil(days.length / Math.max(2, Math.floor((W - padL) / 52)));
-    const labels = days.map((d, i) => i % every === 0 ? `<text x="${(padL + i * bw + bw / 2).toFixed(1)}" y="${h - 6}" text-anchor="middle" ${FONT} font-size="12" fill="${css('--faint')}">${esc(d.label)}</text>` : '').join('');
-    return `<svg width="${W}" height="${h}" viewBox="0 0 ${W} ${h}" role="img">${grid}${cols}${labels}</svg>`;
-  });
-}
-
-// Last N cycles: one thin bar each, coloured by how it went.
-export function cycleBars(el, shots, ideal = null) {
-  return chart(el, (W) => {
-    const H = 64, pad = 4;
-    if (!shots.length) return `<svg width="${W}" height="30"><text x="0" y="20" ${FONT} font-size="14" fill="${css('--faint')}">No cycles yet</text></svg>`;
-    const colour = { cycle: 'var(--run)', small_stop: 'var(--idle)', downtime: 'var(--down)', non_scheduled: 'var(--off)' };
-    const normals = shots.filter(s => s.class === 'cycle').map(s => s.cycletime);
-    const max = Math.max(...(normals.length ? normals : [1]), ideal || 0) * 1.3;
-    const bw = W / shots.length;
-    const bars = shots.map((s, i) => {
-      const hh = Math.max(3, Math.min(H - pad * 2, (Math.min(s.cycletime, max) / max) * (H - pad * 2)));
-      return `<rect x="${(i * bw).toFixed(1)}" y="${(H - pad - hh).toFixed(1)}" width="${Math.max(1, bw - 1.5).toFixed(1)}" height="${hh.toFixed(1)}" rx="1.5" fill="${colour[s.class]}"><title>${esc(s.timestamp)}, ${s.cycletime}s</title></rect>`;
-    }).join('');
-    const line = ideal ? `<line x1="0" x2="${W}" y1="${H - pad - (ideal / max) * (H - pad * 2)}" y2="${H - pad - (ideal / max) * (H - pad * 2)}" stroke="${css('--ink')}" stroke-dasharray="3 4" opacity=".45"/>` : '';
-    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img">${bars}${line}</svg>`;
-  });
+// line with axes, drawn to the element width. pts: [{l, v}] (v may be null)
+export function line(el, pts, { h = 240, max = 100, min = 0, target = null, color = 'var(--brand)', unit = '%' } = {}) {
+  const draw = () => {
+    if (!pts.some(p => p.v != null)) { el.innerHTML = '<div class="part" style="padding:8px 0">Nothing yet</div>'; return; }
+    const W = Math.max(260, el.clientWidth), padL = 38, padR = 12, padT = 12, padB = 28;
+    const x = i => padL + (pts.length === 1 ? (W - padL - padR) / 2 : i / (pts.length - 1) * (W - padL - padR)), y = v => padT + (1 - (v - min) / (max - min)) * (h - padT - padB);
+    const grid = [0, 25, 50, 75, 100].map(v => `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="${css('--grid')}"/><text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="${css('--faint')}">${v}</text>`).join('');
+    const segs = []; let cur = [];
+    pts.forEach((p, i) => { if (p.v == null) { if (cur.length) segs.push(cur); cur = []; return; } cur.push([x(i), y(p.v)]); });
+    if (cur.length) segs.push(cur);
+    const paths = segs.map(s => { const dd = s.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(''); return `<path d="${dd}L${s.at(-1)[0]},${y(min)}L${s[0][0]},${y(min)}Z" fill="url(#lg)"/><path d="${dd}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`; }).join('');
+    const last = segs.at(-1)?.at(-1);
+    const every = Math.ceil(pts.length / Math.max(2, Math.floor((W - padL) / 56)));
+    const labels = pts.map((p, i) => i % every === 0 || i === pts.length - 1 ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" font-size="11" fill="${css('--faint')}">${esc(p.l)}</text>` : '').join('');
+    const tl = target == null ? '' : `<line x1="${padL}" x2="${W - padR}" y1="${y(target)}" y2="${y(target)}" stroke="${css('--run')}" stroke-dasharray="4 5" opacity=".8"/><text x="${W - padR}" y="${y(target) - 6}" text-anchor="end" font-size="11" font-weight="700" fill="${css('--run')}">TARGET ${target}${unit}</text>`;
+    el.innerHTML = `<svg width="${W}" height="${h}" role="img"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>${grid}${tl}${paths}${last ? `<circle cx="${last[0]}" cy="${last[1]}" r="5" fill="${color}" stroke="${css('--s1')}" stroke-width="3"/>` : ''}${labels}</svg>`;
+  };
+  draw();
+  window.addEventListener('resize', draw);
+  window.addEventListener('themechange', draw);
+  return draw;
 }

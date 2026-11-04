@@ -11,14 +11,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { db } from '../src/db.js';
 
-db.exec(`CREATE TABLE IF NOT EXISTS report_facts (
-  machine TEXT NOT NULL, date TEXT NOT NULL, shift TEXT NOT NULL,
-  planned_minutes REAL, downtime_minutes REAL, downtime_by_reason TEXT,
-  shots INTEGER, output_units INTEGER, ideal_cycle_sec REAL, avg_cycle_sec REAL,
-  defects INTEGER, defects_by_type TEXT, mould TEXT, notes TEXT,
-  source_file TEXT NOT NULL, source_page TEXT, imported_at TEXT NOT NULL,
-  PRIMARY KEY (machine, date, shift)
-)`);
+// report_facts is created by migration 4 (src/migrate.js) when the database opens.
 
 export function check(row) {
   const p = [];

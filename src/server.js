@@ -604,6 +604,7 @@ export function startServer({ onLog = () => {} } = {}) {
         return json(res, store.qualitySummary({ machine: q.get('machine') || null, ...w }));
       }
       if (path === '/api/oee') return json(res, oee.dashboard(new Date()));
+      if (path === '/api/timeline') return json(res, oee.shiftTimelines(new Date()));
       if (path === '/api/oee/trend') return json(res, { points: oee.trend({ machineId: q.get('machine') || null, days: Math.min(60, Number(q.get('days') || 14)) }) });
 
       // The QR image. The link carries the machine's token, never a login.

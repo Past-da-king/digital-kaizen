@@ -13,7 +13,7 @@ import { db } from './db.js';
 import { STOP_REASONS, MACHINES, DOWNTIME_RULES, CAVITIES } from './config.js';
 import { STARTER_LADDER } from './starter.js';
 
-db.exec(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+// the settings table is created by migration 2 in migrate.js
 
 export const DEFAULT_DEFECT_TYPES = [
   'Short shot', 'Flash', 'Sink marks', 'Burn marks', 'Warping',

@@ -1,6 +1,6 @@
 {
   "name": "digital-kaizen",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "Digital Kaizen: live shot counting, downtime and defect logging by QR, OEE and an escalation ladder for injection-moulding machines. ToF sensor -> MQTT -> database -> dashboard.",
@@ -13,7 +13,9 @@
     "reset": "node --env-file-if-exists=.env scripts/reset-db.js",
     "test": "node --test && node scripts/verify-guards.js",
     "admin": "node --env-file-if-exists=.env scripts/create-admin.js",
-    "mail-sink": "node scripts/smtp-sink.js"
+    "mail-sink": "node scripts/smtp-sink.js",
+    "upgrade-check": "node scripts/upgrade.js --check",
+    "rollback": "node scripts/rollback.js"
   },
   "dependencies": {
     "aedes": "^0.51.3",
