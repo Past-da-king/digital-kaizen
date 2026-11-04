@@ -1,0 +1,207 @@
+{
+  "at": "2026-11-04T09:37:57.791Z",
+  "passed": 40,
+  "failed": 0,
+  "results": [
+    {
+      "name": "invite flow gives 10 recovery codes",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "admin lands on the dashboard after setup",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "wrong password is refused",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "wrong authenticator code is refused",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "two-step sign in works",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "ladder edits are saved (3 people-levels, level 2 at 0.5 min)",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "operators added to the name list",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "test email reaches the local mail sink",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "MA1 running: only Log defects (no downtime button)",
+      "pass": true,
+      "extra": "Machine is running"
+    },
+    {
+      "name": "defects saved from the phone",
+      "pass": true,
+      "extra": "6 × Short shot"
+    },
+    {
+      "name": "defect row has name, type, quantity, shift, photo",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "photo is served to signed-in staff",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "10 defects (limit 8) raised a defects issue",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "Call a manager works from the phone",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "demo stop accepted",
+      "pass": true,
+      "extra": "200"
+    },
+    {
+      "name": "MA2 page switches to DOWN from the live sensor state",
+      "pass": true,
+      "extra": "91 s"
+    },
+    {
+      "name": "MA2 down: Log downtime is offered",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "sensor stop became an issue and level 1 to 3 emails reached the sink",
+      "pass": true,
+      "extra": "Level 1: Haitian MA2 down 0 min -> evproductionfloor@gmail.com | Level 2: Haitian MA2 down 1 min -> mechanical@evernu.co.za | Level 3: Haitian MA2 down 1 min -> production@evernu.co.za | Level 3: Haitian MA2 down 1 min -> deputy.production@evernu.example"
+    },
+    {
+      "name": "email says machine, issue, since when and who it has gone to",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "level 3 went to both people at that level",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "downtime reason saved against the live stop",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "email carries an acknowledge link",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "acknowledging stopped the ladder (no more level mails)",
+      "pass": true,
+      "extra": "before 4, after 4"
+    },
+    {
+      "name": "the people already told got an acknowledged note",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "explained stop is in the downtime log once the machine restarts",
+      "pass": true,
+      "extra": "[[\"Material issue\",4.1]]"
+    },
+    {
+      "name": "the downtime issue resolved by itself when the machine ran again",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on / at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /quality.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /escalations.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /history.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /sensors.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /qr.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /settings.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /users.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /account.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no sideways scroll on /about.html at 390",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "defects CSV has the names, types and shift",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "downtime CSV has the reason, name and note",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "escalations CSV exports",
+      "pass": true,
+      "extra": ""
+    },
+    {
+      "name": "no console or page errors anywhere",
+      "pass": true,
+      "extra": ""
+    }
+  ]
+}

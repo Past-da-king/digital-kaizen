@@ -15,7 +15,7 @@ $('to').value = iso(today);
 $('from').value = iso(new Date(today.getTime() - 2 * 86400000));
 
 if (cfg.range?.min) {
-  $('range').textContent = `${cfg.range.n.toLocaleString()} shots recorded, ${shortBucket(cfg.range.min).slice(0,-6)} to ${shortBucket(cfg.range.max).slice(0,-6)}`;
+  if ($('range')) $('range').textContent = `${cfg.range.n.toLocaleString()} shots recorded, ${shortBucket(cfg.range.min).slice(0,-6)} to ${shortBucket(cfg.range.max).slice(0,-6)}`;
 }
 
 function params() {

@@ -31,7 +31,7 @@ export const ago = (sec) => {
 
 export async function api(path, opts) {
   const r = await fetch(path, opts);
-  if (r.status === 401 && !path.startsWith('/api/auth') && !path.startsWith('/api/login') && !path.startsWith('/api/invite') && !path.startsWith('/api/ack')) { location.href = '/login.html'; throw new Error('not signed in'); }
+  if (r.status === 401 && !path.startsWith('/api/auth') && !path.startsWith('/api/login') && !path.startsWith('/api/invite') && !path.startsWith('/api/ack')) { location.href = '/login.html'; return new Promise(() => {}); }
   return r.json();
 }
 export const postJson = (path, body) => api(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
@@ -52,7 +52,7 @@ const NAV = [
   ['/sensors.html', 'Sensors', 'admin'], ['/qr.html', 'Labels'], ['/settings.html', 'Settings', 'admin'], ['/users.html', 'People', 'admin'],
 ];
 
-export async function mountHeader({ active = '', clock = true, me = undefined, plant = 'Evernu Plastics' } = {}) {
+export async function mountHeader({ active = '', clock = true, me = undefined, plant = 'Evernu Plastics', conn = clock } = {}) {
   if (me === undefined) {
     try { me = (await fetch('/api/me').then(r => r.json())).user; } catch { me = null; }
   }
@@ -63,7 +63,7 @@ export async function mountHeader({ active = '', clock = true, me = undefined, p
     <nav>${items.map(([href, label]) => `<a href="${href}" class="${href === active ? 'on' : ''}">${label}</a>`).join('')}</nav>
     <div class="spacer"></div>
     ${clock ? '<div class="clock" id="clock"></div>' : ''}
-    <div class="conn"><span class="dot" id="dot"></span><span id="connText">connecting</span></div>
+    ${conn ? '<div class="conn"><span class="dot" id="dot"></span><span id="connText">connecting</span></div>' : ''}
     <button class="iconbtn ghost" id="themeBtn" title="Light or dark" aria-label="Switch between light and dark"></button>
     ${me ? `<div class="me" id="me"><button class="iconbtn ghost" id="meBtn" aria-label="Account">${ICON.user}</button>
       <div class="menu"><div class="who"><b>${esc(me.name)}</b>${esc(me.role)}</div>

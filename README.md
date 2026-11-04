@@ -144,7 +144,7 @@ Leave that window open. On any computer on the factory network, open:
 
 **http://192.120.0.7:4310**
 
-Sign in with the dashboard password from Step 3.
+Sign in with the account you make in Step 8 (until then it uses the dashboard password from Step 3).
 
 If the page does not open from another computer but does open on the server itself (`http://localhost:4310`), the server's firewall is blocking port 4310. Step 7 opens it on Windows. On Linux: `sudo ufw allow 4310/tcp`.
 
@@ -190,13 +190,10 @@ Open http://192.120.0.7:4310 again to confirm it is running, then restart the se
 
 ---
 
-## Step 8. Print the machine labels (optional)
+## Step 8. Accounts, email and the QR labels
 
-Open **Labels** in the dashboard and print the page. Each label has a QR code for one machine. When a machine stops, the operator scans it with a phone and taps the reason. No login is needed on the phone, but the phone must be on the factory network.
-
-Open the Labels page using the address **http://192.120.0.7:4310**, not `localhost`, because the address you use is the one printed into the QR codes.
-
----
+New in 1.3.0. Follow **UPDATE-v1.3.md** for: making the first admin (`npm run admin -- "Name" email`), setting up the
+mail account for escalation emails, editing the ladder, and printing the QR labels (Labels page).
 
 ## Day to day
 
@@ -251,9 +248,9 @@ All settings live in the `.env` file in the app folder.
 | `DK_BROKER_PASS` | Password for that broker | empty |
 | `DK_TOPIC_ROOT` | First part of the sensors' topic | `factory-demo-9f7c2a61` |
 | `DK_WEB_PORT` | Port the dashboard is served on | `4310` |
-| `DK_SMTP_HOST`, `DK_SMTP_PORT`, `DK_SMTP_USER`, `DK_SMTP_PASS`, `DK_MAIL_FROM`, `DK_MAIL_TO` | Email alerts when a machine stays stopped. Leave them out to switch alerts off. Sending email needs the server to reach a mail server. | off |
+| SMTP (mail) | Set on the **Settings > Email** screen, not in this file. The old `DK_SMTP_*` and `DK_MAIL_*` lines are only used as a starting value if nothing is saved on the screen. | off |
 
-Machine names, cycle times, downtime limits, shift hours and the list of stop reasons are in `src/config.js`.
+Escalation people and timings, limits, stop reasons, defect types, moulds and operator names are on the **Settings** screen. Machine names, shift hours and downtime rules are in `src/config.js`.
 
 ---
 

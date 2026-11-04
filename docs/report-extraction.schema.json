@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Factory report extraction, MA1 and MA2",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["machine", "date", "shift", "source_file"],
+    "additionalProperties": false,
+    "properties": {
+      "machine": { "enum": ["MA1", "MA2"] },
+      "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "shift": { "enum": ["A", "B", "DAY"] },
+      "planned_minutes": { "type": ["number", "null"], "minimum": 0 },
+      "downtime_minutes": { "type": ["number", "null"], "minimum": 0 },
+      "downtime_by_reason": {
+        "type": ["array", "null"],
+        "items": { "type": "object", "required": ["reason", "minutes"], "properties": { "reason": { "type": "string" }, "minutes": { "type": "number", "minimum": 0 }, "planned": { "type": ["boolean", "null"] } } }
+      },
+      "shots": { "type": ["integer", "null"], "minimum": 0 },
+      "output_units": { "type": ["integer", "null"], "minimum": 0 },
+      "ideal_cycle_sec": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+      "avg_cycle_sec": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+      "defects": { "type": ["integer", "null"], "minimum": 0 },
+      "defects_by_type": {
+        "type": ["array", "null"],
+        "items": { "type": "object", "required": ["type", "qty"], "properties": { "type": { "type": "string" }, "qty": { "type": "integer", "minimum": 0 } } }
+      },
+      "mould": { "type": ["string", "null"] },
+      "notes": { "type": ["string", "null"] },
+      "source_file": { "type": "string" },
+      "source_page": { "type": ["integer", "string", "null"] }
+    }
+  }
+}

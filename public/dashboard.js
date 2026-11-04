@@ -21,7 +21,7 @@ function banner(m, model) {
   if (st.key === 'run') return `<b>Running</b><span>Last cycle ${n1(m.live.last_cycle_sec)} s, ideal ${n1(m.mould?.idealCycleSec)} s</span><span class="r">${eng.gap_human ? `last shot ${esc(eng.gap_human)} ago` : ''}</span>`;
   if (st.key === 'idle') return `<b>${esc(st.label)}</b><span>No shot for ${esc(eng.gap_human || '')}. Counts as downtime after ${m.rules?.downtimeSec ?? 120} s.</span><span class="r"></span>`;
   if (st.key === 'down') {
-    const issue = (model.escalation?.open || []).find(i => i.machine_id === m.id);
+    const issue = [...(model.escalation?.open || []), ...(model.escalation?.acked || [])].find(i => i.machine_id === m.id && i.kind === 'downtime') || (model.escalation?.open || []).find(i => i.machine_id === m.id);
     const reached = issue?.level_reached ? `Level ${issue.level_reached} told` : 'Not escalated yet';
     return `<b>Stopped for ${esc(eng.gap_human || '')}</b><span>${esc(m.eventReason || 'Reason not logged yet')}</span><span class="r">${issue ? (issue.state === 'ACKED' ? `Acknowledged by ${esc(issue.acked_by || 'a manager')}` : esc(reached)) : `Escalates after ${model.limits?.downtimeMin ?? 10} min`}</span>`;
   }
