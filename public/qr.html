@@ -40,7 +40,7 @@
   }
   function draw() {
     $('#sheet').innerHTML = cfg.machines.map(m => `<div class="label"><div class="co">Digital Kaizen</div><h2>${esc(m.name)}</h2><div class="p">${esc(m.part ? m.part + ', ' : '')}${esc(m.id)}</div>
-      <img src="/api/qr?m=${m.id}&t=${Date.now()}" alt="QR code for ${esc(m.id)}"><p class="ask">Scan to log</p><p class="sub">Defects &middot; Downtime &middot; Call a manager</p>
+      <img src="/api/qr?m=${m.id}&t=${Date.now()}" alt="QR code for ${esc(m.id)}"><p class="ask">Scan to log</p><p class="sub">Defects &middot; Downtime</p>
       ${me?.role === 'admin' || !me ? `<div class="tools noprint"><button class="ghost sm" data-rot="${m.id}">Retire this label</button></div>` : ''}</div>`).join('');
   }
   draw();

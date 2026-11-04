@@ -110,10 +110,13 @@ await sleep(1500);
 let issues = (await (await aget('/api/issues')).json()).issues;
 ok('10 defects (limit 8) raised a defects issue', issues.some(i => i.kind === 'defects' && i.machine_id === 'MA1'));
 
-// the manual escalate button
-p.once('dialog', d => d.accept());
-await p.click('#again'); await p.waitForSelector('[data-go="escalate"]'); await p.click('[data-go="escalate"]'); await p.waitForSelector('.done h1');
-ok('Call a manager works from the phone', (await p.locator('.done h1').innerText()).includes('Manager called'));
+// there is no way to start an escalation from the phone: no button, and the route is gone
+await p.click('#again'); await p.waitForSelector('.act.df');
+ok('no Call a manager button on the QR page', (await p.locator('text=Call a manager').count()) === 0 && (await p.locator('[data-go="escalate"]').count()) === 0);
+const qs = qrTarget.split('?')[1];
+const noRoute = await fetch(`${BASE}/api/log/escalate?${qs}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason: 'x' }) });
+const noRouteBody = await noRoute.text();
+ok('the manual escalate route no longer exists', (noRoute.status === 404 || noRoute.status === 401 || noRoute.status === 403) && !noRouteBody.includes('"ok":true'), String(noRoute.status));
 
 // ---------- 4. MA2 goes down: the page changes, the ladder climbs by email
 // a real sensor must have learned the stroke before it can tell a stop from a start-up

@@ -1,4 +1,6 @@
-# Digital Kaizen 1.3.0: update handover note
+# Digital Kaizen 1.3.1: update handover note
+
+**1.3.1:** the "Call a manager" button and its route are removed from the QR page. Escalations now start only from the automatic limits (machine down too long, too many defects in a shift). Nothing on the phone page can email the ladder.
 
 What is new, and how to put it on the factory PC (`192.120.0.7`). Read this top to bottom once.
 
@@ -6,8 +8,8 @@ What is new, and how to put it on the factory PC (`192.120.0.7`). Read this top 
 
 | New | In one line |
 |---|---|
-| **QR log page** | Scan the code on a machine, pick your name, log **defects** (number, type, shift, note, photo) or **downtime** (reason, how long, note). No login. If the machine is running only *Log defects* shows; if it is down *Log downtime* shows too. |
-| **Escalation emails** | A machine down too long, too many defects, or *Call a manager* on the phone emails up a ladder (Supervisor, Toolroom, Production, Operations, General Manager) until someone presses **Acknowledge**. |
+| **QR log page** | Scan the code on a machine, pick your name, log **defects** (number, type, shift, note, photo) or **downtime** (reason, how long, note). No login, and no way to trigger an escalation from the phone. If the machine is running only *Log defects* shows; if it is down *Log downtime* shows too. |
+| **Escalation emails** | A machine down too long, or too many defects in one shift, emails up a ladder (Supervisor, Toolroom, Production, Operations, General Manager) until someone presses **Acknowledge**. |
 | **OEE** | Availability x Performance x Quality per machine, per shift, today and the last 14 days. |
 | **Redesigned dashboard** | Running / idle / down at a glance, readable across the floor, light and dark. All the old figures are still there. |
 | **Accounts with two-step sign-in** | Admins, managers and viewers sign in with a password and an authenticator app. No public sign-up. |
@@ -21,7 +23,7 @@ Everything stays on the factory PC. The only thing that ever leaves is an email,
 Back up first: copy the `data` folder and `.env` somewhere safe.
 
 **With internet:** in the app folder `git pull`, then `npm install --omit=dev`.
-**Without internet:** unzip `digital-kaizen-1.3.0-offline.zip` over the old folder. `data` and `.env` are kept.
+**Without internet:** unzip `digital-kaizen-1.3.1-offline.zip` over the old folder. `data` and `.env` are kept.
 
 Restart the app (Task Scheduler > Digital Kaizen > End, then Run; or `sudo systemctl restart digital-kaizen`).
 The database upgrades itself on the first start. Nothing in the sensor data is changed.
@@ -110,5 +112,5 @@ See `docs/report-extraction.md`. The field list, an AI prompt, a JSON schema and
 ## Testing that was done (no factory access)
 
 36 automated tests plus the 9 sensor-guard checks (escalation timing, acknowledge, offline mail queue with retry, logging, photos, OEE figures,
-accounts, two-step, lockout, roles) and a 40-check browser end-to-end run (phone and desktop, sign-in with two-step, QR logging with photo, a simulated machine stop that climbed the ladder to levels 1 to 3, acknowledge, restart and resolve) against simulated machines with a local test mail server.
+accounts, two-step, lockout, roles) and a 41-check browser end-to-end run (phone and desktop, sign-in with two-step, QR logging with photo, a simulated machine stop that climbed the ladder to levels 1 to 3, acknowledge, restart and resolve) against simulated machines with a local test mail server.
 Results: `docs/e2e-results.json`.

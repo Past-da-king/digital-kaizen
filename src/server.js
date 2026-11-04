@@ -132,7 +132,7 @@ const OPEN_PATHS = new Set([
 ]);
 // The QR page's own calls: the machine token, not a login.
 const QR_PATHS = new Set([
-  '/api/log/context', '/api/log/downtime', '/api/log/defects', '/api/log/photo', '/api/log/escalate',
+  '/api/log/context', '/api/log/downtime', '/api/log/defects', '/api/log/photo',
   '/api/events/open', '/api/attribute',
 ]);
 
@@ -404,7 +404,6 @@ export function startServer({ onLog = () => {} } = {}) {
             if (!ev || ev.machine_id !== machineId) return json(res, { ok: false, error: 'That stop is not on this machine.' }, 400);
             const r = attribute(ev.id, reason.code, note, o.operator?.name);
             if (!r.ok) return json(res, r, 400);
-            if (body.escalate) esc.raise({ kind: 'manual', machineId, summary: `Stop explained: ${reason.label}`, detail: note || null, raisedBy: o.operator?.name || 'operator at machine', sourceKey: null, now });
             return json(res, { ok: true, eventId: ev.id, reason: reason.label, open: ev.state === 'OPEN' });
           }
 
@@ -431,11 +430,7 @@ export function startServer({ onLog = () => {} } = {}) {
             startedAt: fmt(start), endedAt: fmt(end), minutes, shift: body.shift, note,
             operatorId: o.operator?.id, operator: o.operator?.name, now, source: 'qr',
           });
-          let issue = null;
-          if (body.escalate && !r.duplicate) {
-            issue = esc.raise({ kind: 'manual', machineId, now, summary: `Downtime logged: ${reason.label}, ${Math.round(minutes)} min`, detail: note || null, raisedBy: o.operator?.name || 'operator at machine', sourceKey: null });
-          }
-          return json(res, { ok: true, id: r.id, duplicate: r.duplicate, minutes, issueId: issue?.id ?? null });
+          return json(res, { ok: true, id: r.id, duplicate: r.duplicate, minutes });
         }
 
         // ---- LOG DEFECTS
@@ -454,9 +449,6 @@ export function startServer({ onLog = () => {} } = {}) {
           });
           let issue = null;
           if (!r.duplicate) issue = esc.checkDefects(machineId, r.shiftDay, r.shift, now);
-          if (body.escalate && !r.duplicate) {
-            issue = esc.raise({ kind: 'manual', machineId, now, summary: `${qty} x ${type.label} defects`, detail: String(body.note || '').trim().slice(0, 500) || null, raisedBy: o.operator?.name || 'operator at machine', sourceKey: null });
-          }
           return json(res, {
             ok: true, id: r.id, duplicate: r.duplicate, shift: r.shift,
             shiftTotal: store.defectsInShift(machineId, r.shiftDay, r.shift), limit: settings.all().thresholds.defectsPerShift,
@@ -481,21 +473,6 @@ export function startServer({ onLog = () => {} } = {}) {
           await writeFile(join(PHOTOS, name), buf);
           store.setDefectPhoto(id, name);
           return json(res, { ok: true });
-        }
-
-        // ---- ESCALATE now, from the floor
-        if (req.method === 'POST' && path === '/api/log/escalate') {
-          const o = who(); if (!o.ok) return json(res, o, o.status);
-          const now = new Date();
-          const recent = store.liveIssues().find(i => i.kind === 'manual' && i.machine_id === machineId && (now - store.parse(i.opened_at)) < 10 * 60000);
-          if (recent) return json(res, { ok: true, id: recent.id, existing: true });
-          const r = esc.raise({
-            kind: 'manual', machineId, now,
-            summary: String(body.reason || '').trim().slice(0, 120) || 'Operator needs help at the machine',
-            detail: String(body.note || '').trim().slice(0, 500) || null,
-            raisedBy: o.operator?.name || 'operator at machine', sourceKey: null,
-          });
-          return json(res, { ok: true, id: r.id });
         }
       }
 

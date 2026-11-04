@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-04T09:37:57.791Z",
-  "passed": 40,
+  "at": "2026-11-04T10:11:58.245Z",
+  "passed": 41,
   "failed": 0,
   "results": [
     {
@@ -69,9 +69,14 @@
       "extra": ""
     },
     {
-      "name": "Call a manager works from the phone",
+      "name": "no Call a manager button on the QR page",
       "pass": true,
       "extra": ""
+    },
+    {
+      "name": "the manual escalate route no longer exists",
+      "pass": true,
+      "extra": "401"
     },
     {
       "name": "demo stop accepted",

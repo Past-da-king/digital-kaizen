@@ -22,7 +22,7 @@ function draw() {
   <section class="card full"><div class="card-h"><h2>Escalation ladder</h2><div class="spacer"></div>
       <label class="chip" style="cursor:pointer"><input type="checkbox" id="escOn" ${S.escalationEnabled ? 'checked' : ''}> Escalation emails on</label></div>
     <div class="bd">
-      <p class="note" style="margin:0 0 14px">When an issue opens (a machine down past the limit, too many defects, or someone presses <b>Call a manager</b>) the people at each level are emailed at the time set for that level, until someone acknowledges. The five rows below are only a starting example: change, add or remove anything.</p>
+      <p class="note" style="margin:0 0 14px">When an issue opens (a machine down past the limit or too many defects in a shift) the people at each level are emailed at the time set for that level, until someone acknowledges. The five rows below are only a starting example: change, add or remove anything.</p>
       <div id="levels">${S.ladder.map(levelHtml).join('')}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><button class="ghost" id="addLevel">Add a level</button>
         <span class="field" style="flex-direction:row;align-items:center;gap:8px"><button class="ghost" id="spread">Space levels every</button><input type="number" id="every" value="30" min="1" style="width:84px;height:40px"><span class="part">minutes</span></span></div>

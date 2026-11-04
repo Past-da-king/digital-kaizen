@@ -139,15 +139,21 @@ test('photos: a real image is stored against the entry; anything else is refused
   assert.equal((await fetch(`${base}/api/log/photo?m=MA1&k=bad&id=${d.body.id}`, { method: 'POST', body: jpeg })).status, 403);
 });
 
-test('escalate from the floor, and defects over the shift limit escalate by themselves', async () => {
+test('nobody can start an escalation from the QR page; only the automatic thresholds do', async () => {
   const k = tok('MA1');
-  const e = await post('/api/log/escalate', { machine: 'MA1', key: k, reason: 'Hydraulic leak', operatorId: store && undefined });
-  assert.equal(e.status, 200);
-  const again = await post('/api/log/escalate', { machine: 'MA1', key: k, reason: 'Hydraulic leak' });
-  assert.equal(again.body.existing, true, 'a second tap does not email everyone again');
-  const issue = store.issueById(e.body.id);
-  assert.equal(issue.kind, 'manual'); assert.equal(issue.summary, 'Hydraulic leak');
-  assert.equal(store.mailForIssue(issue.id).filter(m => m.kind === 'escalation').length, 1, 'level 1 is queued straight away');
+  const open0 = store.liveIssues().length;
+  // the old manual route is gone, with a valid token and without one
+  for (const body of [{ machine: 'MA1', key: k, reason: 'Hydraulic leak' }, { machine: 'MA1', reason: 'x' }]) {
+    const r = await post('/api/log/escalate', body);
+    assert.ok(r.status === 404 || r.status === 401 || r.status === 403, `status ${r.status}`);
+  }
+  // the "also call a manager" flag on a log is ignored too
+  const d = await post('/api/log/downtime', { machine: 'MA1', key: k, reasonCode: 'material_issue', minutes: 5, escalate: true, clientId: 'noesc-1' });
+  assert.equal(d.status, 200); assert.equal(d.body.issueId, undefined);
+  const f = await post('/api/log/defects', { machine: 'MA1', key: k, count: 1, typeCode: 'flash', escalate: true, clientId: 'noesc-2' });
+  assert.equal(f.status, 200); assert.equal(f.body.escalated, false);
+  assert.equal(store.liveIssues().length, open0, 'no issue was opened by anything on the QR page');
+  assert.ok(!store.liveIssues().some(i => i.kind === 'manual'));
 
   settings.update({ thresholds: { defectsPerShift: 10 } });
   const before = store.liveIssues().length;

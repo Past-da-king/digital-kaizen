@@ -18,7 +18,6 @@ const q = `m=${encodeURIComponent(machineId)}&k=${encodeURIComponent(key)}`;
 const ICON = {
   stop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   defect: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.01"/></svg>',
-  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
   tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
@@ -126,7 +125,6 @@ function home() {
     <div class="actions">
       ${s !== 'running' ? `<button class="act dt" data-go="downtime"><span class="ic">${ICON.stop}</span><span><b>Log downtime</b><span>${s === 'down' ? 'Why did it stop? Pick a reason' : 'A stop you want to record'}</span></span></button>` : ''}
       <button class="act df" data-go="defects"><span class="ic">${ICON.defect}</span><span><b>Log defects</b><span>How many, what type${ctx.defectsThisShift ? ` &middot; ${n0(ctx.defectsThisShift)} this shift` : ''}</span></span></button>
-      <button class="act esc" data-go="escalate"><span class="ic">${ICON.bell}</span><span><b>Call a manager</b><span>Send an alert up the ladder now</span></span></button>
     </div>
     ${recent()}`;
   bindTheme();
@@ -147,7 +145,6 @@ function tickElapsed() {
 }
 
 function go(to, extra = {}) {
-  if (to === 'escalate') return escalate();
   form = { shift: ctx.shift, count: 1, endedAgo: 0, minutes: 15, ...extra };
   if (to === 'downtime' && state() === 'down' && ctx.event && !extra.eventId) form.eventId = ctx.event.id;
   view = to; render(); window.scrollTo(0, 0);
@@ -174,7 +171,6 @@ function defectsForm() {
     <textarea class="note" id="note" placeholder="Cavity, batch, anything useful">${esc(form.note || '')}</textarea>
     <div class="photo"><button class="pbtn ghost" id="pbtn">${ICON.cam}&nbsp; ${form.photo ? 'Change photo' : 'Add photo'}</button>${form.photo ? `<img src="${form.photoUrl}" alt="photo">` : ''}
       <input type="file" id="pfile" accept="image/*" capture="environment" class="hidden"></div>
-    <label class="checkrow"><input type="checkbox" id="esc" ${form.escalate ? 'checked' : ''}><span>Also call a manager<small>Sends an alert up the ladder</small></span></label>
     <div class="foot"><div class="in"><div class="err" id="err"></div><button class="go-df" id="send">Save defects</button></div></div>`;
   wireCommon();
   const count = document.getElementById('count');
@@ -198,7 +194,7 @@ async function sendDefects() {
   const err = document.getElementById('err');
   if (!form.typeCode) { err.textContent = 'Pick the kind of defect.'; return; }
   const bad = needName(); if (bad) { err.textContent = bad; return; }
-  const body = { count: form.count, typeCode: form.typeCode, shift: form.shift, note: form.note, escalate: Boolean(form.escalate),
+  const body = { count: form.count, typeCode: form.typeCode, shift: form.shift, note: form.note,
     clientId: uid(), operatorId: store.op ? Number(store.op) : undefined, pin: store.pin || undefined };
   const btn = document.getElementById('send'); btn.disabled = true; btn.textContent = 'Saving…';
   const label = ctx.defectTypes.find(d => d.code === form.typeCode)?.label;
@@ -236,7 +232,6 @@ function downtimeForm() {
       <button class="ghost sm" id="useClock" style="margin-top:10px">Enter start and end times instead</button>`}`}
     <div class="q">Note (optional)</div>
     <textarea class="note" id="note" placeholder="What happened?">${esc(form.note || '')}</textarea>
-    <label class="checkrow"><input type="checkbox" id="esc" ${form.escalate ? 'checked' : ''}><span>Also call a manager<small>Sends an alert up the ladder</small></span></label>
     <div class="foot"><div class="in"><div class="err" id="err"></div><button class="go-dt" id="send">Save downtime</button></div></div>`;
   wireCommon();
   app.querySelectorAll('[data-reason]').forEach(b => b.onclick = () => { form.reasonCode = b.dataset.reason; keepNote(); downtimeForm(); });
@@ -265,7 +260,7 @@ async function sendDowntime() {
   const err = document.getElementById('err');
   if (!form.reasonCode) { err.textContent = 'Pick the reason first.'; return; }
   const bad = needName(); if (bad) { err.textContent = bad; return; }
-  const body = { reasonCode: form.reasonCode, note: form.note, escalate: Boolean(form.escalate), shift: form.shift, clientId: uid(),
+  const body = { reasonCode: form.reasonCode, note: form.note, shift: form.shift, clientId: uid(),
     operatorId: store.op ? Number(store.op) : undefined, pin: store.pin || undefined };
   if (form.eventId) body.eventId = form.eventId;
   else if (form.clock) {
@@ -278,20 +273,11 @@ async function sendDowntime() {
     const r = await post('/api/log/downtime', body);
     if (r.status >= 500) throw new Error('server');
     if (!r.body?.ok) { btn.disabled = false; btn.textContent = 'Save downtime'; err.textContent = r.body?.error || 'Could not save. Try again.'; return; }
-    done({ title: 'Downtime saved', line: `${label}${r.body.minutes ? `, ${Math.round(r.body.minutes)} min` : ''}`, escalated: Boolean(r.body.issueId) });
+    done({ title: 'Downtime saved', line: `${label}${r.body.minutes ? `, ${Math.round(r.body.minutes)} min` : ''}` });
   } catch {
     saveOutbox([...outbox(), { path: '/api/log/downtime', body }]);
     done({ title: 'Saved on this phone', line: `${label}. It sends when the Wi-Fi is back.`, offline: true });
   }
-}
-
-// ---- escalate now
-async function escalate() {
-  const bad = needName(); if (bad) { alert(bad); return; }
-  if (!confirm('Send an alert to the supervisor now?')) return;
-  const r = await post('/api/log/escalate', { operatorId: store.op ? Number(store.op) : undefined, pin: store.pin || undefined, reason: state() === 'down' ? 'Machine is down, operator needs help' : 'Operator needs help at the machine' }).catch(() => null);
-  if (r?.body?.ok) done({ title: r.body.existing ? 'Already called' : 'Manager called', line: r.body.existing ? 'An alert for this machine went out a few minutes ago.' : 'The supervisor has been emailed. More levels follow if nobody answers.' });
-  else alert(r?.body?.error || 'Could not send. Check the Wi-Fi and try again.');
 }
 
 function done({ title, line, meter, escalated, offline }) {
@@ -308,9 +294,8 @@ function done({ title, line, meter, escalated, offline }) {
 
 function wireCommon() {
   document.getElementById('back').onclick = () => { view = 'home'; render(); };
-  const esc2 = document.getElementById('esc'); if (esc2) esc2.onchange = () => { form.escalate = esc2.checked; };
 }
-function keepNote() { const n = document.getElementById('note'); if (n) form.note = n.value; const e = document.getElementById('esc'); if (e) form.escalate = e.checked; }
+function keepNote() { const n = document.getElementById('note'); if (n) form.note = n.value; }
 
 // Phone cameras make 4 to 8 MB photos. Shrink to something a factory Wi-Fi can carry.
 async function shrink(file, max = 1280) {
