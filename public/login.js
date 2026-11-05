@@ -1,7 +1,7 @@
 import { $, postJson, api } from './ui.js';
 
 const st = await api('/api/auth/state');
-if (!st.accounts && !st.legacy) location.href = '/';
+if (!st.accounts && !st.legacy) location.href = st.needsSetup ? '/setup' : '/';
 if (st.user) location.href = '/';
 if (st.legacy) { $('#emailRow').classList.add('hidden'); $('#sub').textContent = 'Enter the dashboard password.'; $('#pw').focus(); }
 let stage = 1;

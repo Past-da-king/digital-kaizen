@@ -1,4 +1,4 @@
-import './_env.js';
+import { asExistingInstall } from './_env.js';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -7,6 +7,7 @@ const store = await import('../src/store.js');
 const users = await import('../src/users.js');
 const oee = await import('../src/oee.js');
 const dbm = await import('../src/db.js');
+asExistingInstall(dbm.db);   // these tests are about an install that already existed: no accounts yet, dashboard open as before
 const events = await import('../src/events.js');
 const ingest = await import('../src/ingest.js');
 const { startServer } = await import('../src/server.js');

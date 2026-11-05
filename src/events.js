@@ -230,6 +230,3 @@ export function human(sec) {
   return h ? `${h}h ${m}m` : m ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
-function baseUrl() {
-  return process.env.DK_BASE_URL || `http://localhost:${process.env.DK_WEB_PORT || 4310}`;
-}

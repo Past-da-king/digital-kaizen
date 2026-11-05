@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, readd
 import { dirname, join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.4.1';
 
 const hasTable = (db, t) => Boolean(db.prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?`).get(t));
 const hasColumn = (db, t, c) => db.prepare(`PRAGMA table_info(${t})`).all().some(r => r.name === c);
@@ -144,8 +144,9 @@ const stamp = () => new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
 const sqlq = (p) => p.replace(/'/g, "''");
 
 // ---------- the backup ----------
-export function takeBackup(db, file, { appVersion = APP_VERSION, from, to, counts } = {}) {
-  const base = join(dirname(file), 'backups', `${stamp()}-before-v${appVersion}`);
+export function takeBackup(db, file, { appVersion = APP_VERSION, from, to, counts, label } = {}) {
+  // label: what the backup is for, e.g. 'reset'. Default is the upgrade name 'v<version>'.
+  const base = join(dirname(file), 'backups', `${stamp()}-before-${label || 'v' + appVersion}`);
   let dir = base, n = 1;
   while (existsSync(dir)) dir = `${base}-${++n}`;       // never overwrite an earlier backup
   mkdirSync(dir, { recursive: true });
@@ -178,7 +179,7 @@ export function migrate(db, { file, migrations = MIGRATIONS, appVersion = APP_VE
   const had = hasTable(db, 'schema_migrations')
     ? new Set(db.prepare('SELECT version FROM schema_migrations').all().map(r => r.version)) : new Set();
   const pending = migrations.filter(m => !had.has(m.version));
-  if (!pending.length) return { from: currentVersion(db), to: currentVersion(db), applied: [], backup: null };
+  if (!pending.length) return { from: currentVersion(db), to: currentVersion(db), applied: [], backup: null, fresh: false };
 
   const from = currentVersion(db);
   const to = Math.max(...migrations.map(m => m.version));
@@ -215,7 +216,7 @@ export function migrate(db, { file, migrations = MIGRATIONS, appVersion = APP_VE
     const lost = Object.entries(before).filter(([t, n]) => (after[t] ?? 0) < n).map(([t, n]) => `${t}: ${n} before, ${after[t] ?? 0} now`);
     if (lost.length) throw new Error(`Row counts dropped after the upgrade (${lost.join('; ')}). Stop, then run: node scripts/rollback.js latest.${backup ? ` Backup: ${backup.dir}` : ''}`);
   }
-  return { from, to, applied, backup };
+  return { from, to, applied, backup, fresh: !hadData };
 }
 
 // ---------- put a backup back (used by scripts/rollback.js) ----------

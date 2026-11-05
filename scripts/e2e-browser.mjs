@@ -5,9 +5,12 @@
 //   2. node scripts/create-admin.js "Name" a@factory.test      (prints the setup link)
 //   3. E2E_INVITE=<that link> E2E_BASE=http://localhost:4410 node scripts/e2e-browser.mjs <screenshot folder>
 //
-// Needs playwright-core and a Chrome or Edge.
+// Needs a Chrome, Chromium or Edge (set CHROME to its path if it is not found) and
+// playwright-core, which is a dev dependency: `npm install` brings it. PW can point at
+// another copy's index.mjs.
 import { createHmac } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const { chromium } = await import(process.env.PW || 'playwright-core');
@@ -15,7 +18,27 @@ const BASE = process.env.E2E_BASE || 'http://localhost:4410';
 const SINK = process.env.E2E_SINK || 'http://localhost:8025';
 const INVITE = process.env.E2E_INVITE;
 const OUT = process.argv[2] || './e2e-shots'; mkdirSync(OUT, { recursive: true });
-const chrome = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+// CHROME wins. Otherwise look in the usual places on Windows, macOS and Linux, then in
+// the browsers Playwright itself downloaded (~/.cache/ms-playwright).
+function findBrowser() {
+  if (process.env.CHROME) return process.env.CHROME;
+  const roots = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA].filter(Boolean);
+  const list = [
+    ...roots.flatMap(r => [`${r}/Google/Chrome/Application/chrome.exe`, `${r}/Microsoft/Edge/Application/msedge.exe`]),
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/snap/bin/chromium',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ];
+  for (const p of list) if (existsSync(p)) return p;
+  const pw = join(homedir(), '.cache', 'ms-playwright');
+  if (existsSync(pw)) {
+    for (const d of readdirSync(pw).filter(n => /^chromium-\d+$/.test(n)).sort().reverse()) {
+      for (const sub of ['chrome-linux64/chrome', 'chrome-linux/chrome', 'chrome-win64/chrome.exe']) if (existsSync(join(pw, d, sub))) return join(pw, d, sub);
+    }
+  }
+  console.error('No Chrome, Chromium or Edge found. Set CHROME to the full path of the browser.'); process.exit(2);
+}
+const chrome = findBrowser();
 const PASSWORD = 'Factory-Floor-Kaizen-42';
 
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';

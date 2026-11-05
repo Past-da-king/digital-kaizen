@@ -151,7 +151,7 @@ Leave that window open (Step 8 makes it start by itself later). On any computer 
 
 The page asks for the **temporary dashboard password** from Step 3. Enter it. You see the Live floor.
 
-> **Do Step 6 now.** Until the first admin exists, the only protection is that one shared password. If you started with `npm run demo` instead of `npm start`, there is **no** protection at all and anyone on the network can open the dashboard. Nobody is asked to make an account by themselves: it only happens when you run the command in Step 6.
+> **Do Step 6 now.** Until the first admin exists, the only protection is that one shared password. If you started with `npm run demo` instead of `npm start`, there is **no** protection at all and anyone on the network can open the dashboard. Nobody is asked to make an account by themselves: it only happens in Step 6. When the app starts it prints one plain line saying whether anyone on the network can open the dashboard, and which address it puts in links (see Step 6).
 
 If the page does not open from another computer but does open on the server itself (`http://localhost:4310`), the server's firewall is blocking port 4310. Step 8 opens it on Windows. On Linux: `sudo ufw allow 4310/tcp`.
 
@@ -176,7 +176,9 @@ It prints a one-time link:
   http://192.120.0.7:4310/invite.html?t=...
 ```
 
-If the link starts with some other address, keep everything from `/invite.html` and put the address you really use in front of it, for example `http://192.120.0.7:4310/invite.html?t=...`.
+The command also prints which address it used and why. It prefers this PC's ordinary network address over a Tailscale, VPN, Docker or WSL one. If it is still not the one people use, keep everything from `/invite.html` and put the right address in front of it, for example `http://192.120.0.7:4310/invite.html?t=...`, or set it once for good: add `DK_BASE_URL=http://192.120.0.7:4310` to `.env` (or fill **Settings > Dashboard address**, which wins) and restart.
+
+**Prefer a page to a command?** After you have entered the temporary password in Step 5, open `http://192.120.0.7:4310/setup`. It asks for the name and email of the first admin and goes straight on to the same four screens below. (On a brand-new install that has no shared password at all, the dashboard stays closed and the app prints a one-time setup link when it starts: open that instead. It works once and a new one is made at every start.)
 
 Open it in a browser, with the person's phone at hand. You will see four things in turn:
 
@@ -255,7 +257,7 @@ Open **People** in the left menu (admins only).
 - **Reset someone's sign-in** (lost phone, or forgotten password). Press **Reset** on their row and confirm. Their old password and authenticator stop working at once and they are signed out. A new one-time link appears: give it to them, and they pick a new password and scan a new QR code. That is also how a person's 2-step is re-enrolled.
 - **Disable / Enable** switches a person off without deleting them. **Unlock** frees someone locked out after 5 wrong passwords (it also frees itself after 15 minutes).
 - **A person with a recovery code** can sign in with it instead of the 6 digits, one use per code, and should then ask for a Reset.
-- **The only admin lost the phone and the recovery codes.** On the server run `npm run admin -- "Second Admin" other@evernu.co.za` with a different email, finish that link, sign in, and press **Reset** on the first admin's row.
+- **The only admin lost the phone and the recovery codes.** On the server run `npm run reset-account -- admin@evernu.co.za` (their own email). It ends their sessions, makes the old password and authenticator useless, writes the reset to the sign-in log and prints a new one-time link (72 hours). Nothing else is touched. It refuses an email that has no account. The same command works for anyone who lost a phone.
 - **Operators** are not accounts. They are names added under **Settings > Operators on the QR page**.
 - Every person can change their password and make new recovery codes under **Password and two-step** in the menu at the bottom of the left bar. The **People** page also shows the recent sign-in activity.
 
@@ -274,7 +276,7 @@ Open **People** in the left menu (admins only).
 | **Remove it (Windows)** | In admin PowerShell: `Unregister-ScheduledTask -TaskName "Digital Kaizen" -Confirm:$false`, then delete the folder. |
 | **Remove it (Linux)** | `sudo systemctl disable --now digital-kaizen`, then delete the folder. |
 
-**Never run `npm run reset` or `npm run seed` on the factory install.** `reset` wipes the shot history, events, downtime, logs and escalations with no question asked. `seed` fills the database with invented history. They exist only for the demo.
+**Never run `npm run reset` or `npm run seed` on the factory install.** `reset` wipes the shot history, events, downtime, logs and escalations. `seed` fills the database with invented history. They exist only for the demo. Since 1.4.1 they cannot run by accident: `reset` refuses unless you type `DELETE EVERYTHING` in a terminal (or pass `--yes-delete-everything`), and takes a backup first; `seed` refuses on a database that already holds shots unless you pass `--yes-add-demo-data`, and also backs up first.
 
 ---
 
@@ -328,7 +330,7 @@ Most settings are on the **Settings** screen of the dashboard. The file `.env` i
 | `DK_BROKER_PASS` | Password for that broker | empty |
 | `DK_TOPIC_ROOT` | First part of the sensors' topic | `factory-demo-9f7c2a61` |
 | `DK_WEB_PORT` | Port the dashboard is served on | `4310` |
-| `DK_BASE_URL` | Starting value for the dashboard address in emails and QR codes (**Settings > Dashboard address** wins) | this PC's network address and the port |
+| `DK_BASE_URL` | Starting value for the dashboard address in emails, invite links and QR codes, for example `http://192.120.0.7:4310` (**Settings > Dashboard address** wins) | this PC's ordinary LAN address (192.168, 10, 172.16 to 31 first; Tailscale 100.x and virtual adapters last) and the port |
 | SMTP (mail) | Set on the **Settings > Email** screen, not in this file. The old `DK_SMTP_*` and `DK_MAIL_FROM` lines are only used as a starting value if nothing is saved on the screen. | off |
 
 Escalation people and timings, limits, stop reasons, defect types, moulds and operator names are on the **Settings** screen. Machine names, shift hours and downtime rules are in `src/config.js`.
@@ -347,7 +349,7 @@ npm run demo
 Then open http://localhost:4310. Things to know:
 
 - This mode starts its own small MQTT broker on port 1883, so **do not use it on the factory server**, where Mosquitto already has that port. It also writes simulated data into the `data` folder of the folder you run it in, so never run it in the live install folder.
-- **The demo dashboard is open: nobody is asked to sign in** until you make an admin with `npm run admin -- "Your Name" you@example.com`. That is by design, so an update can never lock a factory out; it is also why Step 6 is required on a real install.
+- **The demo dashboard is open: nobody is asked to sign in** until you make an admin with `npm run admin -- "Your Name" you@example.com`. The demo is the mode with the simulated machines, and /setup is off there. The start-up window says so in plain words. A real install is different: a brand-new one starts closed and needs the setup link (Step 6); an existing one is never closed by an update.
 - It ignores `.env`. To use another port: `DK_WEB_PORT=4311 npm run demo` (Linux), or `$env:DK_WEB_PORT=4311; npm run demo` (PowerShell).
 - To rehearse escalation emails without sending any, run `npm run mail-sink` in a second window (needs the `npm install` above), then point **Settings > Email** at `127.0.0.1`, port `1025`, security None. Read the messages at http://localhost:8025.
 

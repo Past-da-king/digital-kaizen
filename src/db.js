@@ -35,6 +35,11 @@ db.exec('PRAGMA journal_mode = WAL;');
 // for lost rows afterwards.
 export const migration = migrate(db, { file: DB.file, log: (m) => { if (process.env.DK_QUIET !== '1') console.log(`  db: ${m}`); } });
 
+// A brand-new install (this file did not exist before this start) is marked once, so the
+// dashboard stays closed until its first admin is made through /setup (see setup.js).
+// An existing database never gets the mark, so an upgrade can not lock a factory out.
+if (migration.fresh) db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES ('setupGate', '"on"')`).run();
+
 // Any downtime event still OPEN at boot belongs to a previous run of
 // the server — nothing is watching its clock any more. Close it out
 // rather than leaving a phantom event open for ever.

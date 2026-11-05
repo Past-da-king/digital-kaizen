@@ -174,6 +174,7 @@ const clearFails = (key) => db.prepare('DELETE FROM auth_attempts WHERE key = ?'
 // ---------- queries ----------
 const byId = (id) => db.prepare('SELECT * FROM users WHERE id = ?').get(id) || null;
 const byEmail = (e) => db.prepare('SELECT * FROM users WHERE email = ?').get(String(e || '').trim().toLowerCase()) || null;
+export const findByEmail = (e) => byEmail(e);
 export const userCount = () => db.prepare(`SELECT COUNT(*) n FROM users WHERE role != 'operator'`).get().n;
 // Accounts switch on with the first dashboard user. Names on the QR list do not count.
 export const accountsEnabled = () => userCount() > 0;

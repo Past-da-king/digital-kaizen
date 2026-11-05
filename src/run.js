@@ -24,6 +24,9 @@ import { isLocked, secretsSource, deviceCredentials } from './auth.js';
 import { tick as escalationTick } from './escalation.js';
 import { processQueue } from './mail.js';
 import { accountsEnabled } from './users.js';
+import { startupLines } from './setup.js';
+import { baseUrlInfo } from './escalation.js';
+import { envBaseUrlProblem } from './net.js';
 
 const SPEED = Number(process.env.DK_SPEED || 1);
 // On-site mode. The simulators are forced OFF here and that is not a
@@ -39,7 +42,7 @@ console.log(`\n  DIGITAL KAIZEN — ${NO_SIM ? 'real hardware only' : 'simulated
 if (EXTERNAL) log(`on-site mode — listening on the existing broker ${MQTT.externalUrl}, starting none`);
 else await startBroker({ onLog: log });
 startMqttIngest({ onLog: log });
-await startServer({ onLog: log });
+await startServer({ onLog: log, demo: !NO_SIM });
 
 // The escalation ladder and the mail queue run on their own clocks. Both
 // read what is due from the database, so a restart loses nothing.
@@ -118,11 +121,22 @@ if (NO_SIM) {
   if (SPEED > 1) log(`speed x${SPEED}`);
 }
 
+const setupInfo = startupLines();
 log(accountsEnabled()
   ? 'accounts: signed-in users with two-step verification'
+  : setupInfo.gated ? 'accounts: none yet. The dashboard is closed until the first admin is made (see below)'
   : 'accounts: none yet. Create the first admin with:  npm run admin -- "Your Name" you@example.com');
-log(`security: ${isLocked() ? 'credentials required (' + secretsSource() + ')' : 'OPEN — fine on a private LAN, never on a public IP'}`);
+if (!accountsEnabled() && !isLocked()) {
+  log(NO_SIM && !setupInfo.gated
+    ? 'WARNING: NO PASSWORD AND NO ACCOUNTS. Anyone on this network can open the dashboard and see the data. Make the first admin now: npm run admin -- "Your Name" you@example.com'
+    : !setupInfo.gated ? 'DEMO: no password and no accounts, so anyone on this network can open the dashboard. Fine for a demo, never for the factory.' : 'security: dashboard closed (first-run setup)');
+} else log(`security: ${isLocked() ? 'credentials required (' + secretsSource() + ')' : 'accounts required'}`);
+const bu = baseUrlInfo();
+log(`links in emails, QR codes and invites use ${bu.url}  (from ${bu.source})`);
+if (!bu.source.startsWith('Settings') && !bu.source.startsWith('DK_BASE')) log('wrong address? set DK_BASE_URL=http://<address>:' + WEB.port + ' in .env, or Settings > Dashboard address');
+if (envBaseUrlProblem()) log(envBaseUrlProblem());
 console.log('  ' + '-'.repeat(46));
+if (setupInfo.gated) { console.log(''); for (const l of setupInfo.lines) console.log('  ' + l); }
 console.log(`\n  Dashboard   http://localhost:${WEB.port}`);
 console.log(`  Broker      ${EXTERNAL ? MQTT.externalUrl + '  (existing, not ours)' : 'mqtt://<this-machine-ip>:' + MQTT.port}`);
 console.log(`  Topic       ${MQTT.deviceWildcard}\n`);

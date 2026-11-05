@@ -9,9 +9,21 @@
 
 import { VirtualDevice } from '../src/sim/device.js';
 import { MACHINES } from '../src/config.js';
-import { recordShot, recordStatus, dataRange, iso } from '../src/db.js';
+import { recordShot, recordStatus, dataRange, iso, db } from '../src/db.js';
+import { DB } from '../src/config.js';
+import { confirmDestructive, backupFirst } from './_confirm.js';
 
-const DAYS = Number(process.argv[2] || 7);
+// Seeding ADDS about a week of invented shots. On a database that already holds production
+// data that would mix made-up numbers into real ones, so it is guarded like a reset.
+const DAYS = Number(process.argv.slice(2).find(a => /^\d+$/.test(a)) || 7);
+if (dataRange().n > 0) {
+  const c = await confirmDestructive({
+    what: `${DB.file} already holds ${dataRange().n} shot rows. Seeding would mix INVENTED production data into them.\n  Never do this at the factory.`,
+    flag: '--yes-add-demo-data', phrase: 'ADD DEMO DATA',
+  });
+  if (!c.ok) { console.log(`\n  ${c.why}\n`); process.exit(1); }
+  backupFirst(db, DB.file, 'seed');
+}
 const now = new Date();
 const start = new Date(now.getTime() - DAYS * 86400000);
 

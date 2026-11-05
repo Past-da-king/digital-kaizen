@@ -32,6 +32,8 @@ import * as users from './users.js';
 import * as esc from './escalation.js';
 import * as mail from './mail.js';
 import * as oee from './oee.js';
+import * as setup from './setup.js';
+import { envBaseUrl } from './net.js';
 import { getLive, subscribe, handlePayload, handleDevicePayload, unassignedDevices } from './ingest.js';
 import { attribute, openFor, liveEventState, human } from './events.js';
 import { isLocked, checkDashPassword, mintSession, validSession, secretsSource } from './auth.js';
@@ -123,7 +125,7 @@ function roleNeeded(method, path) {
 
 // Pages and scripts that are only shells (the data behind them is gated).
 const OPEN_PATHS = new Set([
-  '/login.html', '/login.js', '/invite.html', '/invite.js', '/ack', '/ack.html', '/ack.js',
+  '/login.html', '/login.js', '/invite.html', '/invite.js', '/setup', '/setup.html', '/setup.js', '/api/setup/state', '/api/setup/create', '/ack', '/ack.html', '/ack.js',
   '/log.html', '/log.js', '/log.css', '/ui.js', '/attribute.html', '/attribute.js', '/style.css', '/favicon.ico', '/favicon.svg',
   '/api/login', '/api/auth/state', '/api/auth/login', '/api/auth/2fa', '/api/auth/logout',
   '/api/invite/info', '/api/invite/start', '/api/invite/finish', '/api/ack/info', '/api/ack',
@@ -171,7 +173,8 @@ function lastClock(hhmm, now) {
   return d;
 }
 
-export function startServer({ onLog = () => {} } = {}) {
+export function startServer({ onLog = () => {}, demo = false } = {}) {
+  setup.configure({ demo });
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const q = url.searchParams;
@@ -191,6 +194,12 @@ export function startServer({ onLog = () => {} } = {}) {
       if (users.accountsEnabled()) me = users.sessionFrom(getCookie(req, 'dk_staff'), 'staff');
 
       if (!OPEN_PATHS.has(path) && !QR_PATHS.has(path)) {
+        if (setup.gateOn()) {
+          // brand-new install: closed until the first admin exists
+          const isPage = !path.startsWith('/api/') && path !== '/photos' && !path.startsWith('/photos/');
+          if (isPage) { res.writeHead(302, { location: '/setup' }); return res.end(); }
+          return json(res, { ok: false, error: 'setup needed: open /setup on the server' }, 401);
+        }
         if (users.accountsEnabled()) {
           const need = roleNeeded(req.method, path);
           const isPage = !path.startsWith('/api/') && path !== '/photos' && !path.startsWith('/photos/');
@@ -224,7 +233,19 @@ export function startServer({ onLog = () => {} } = {}) {
       // ACCOUNTS
       // ============================================================
       if (path === '/api/auth/state') {
-        return json(res, { accounts: users.accountsEnabled(), needsSetup: !users.accountsEnabled() && !isLocked(), legacy: !users.accountsEnabled() && isLocked(), user: me });
+        return json(res, { accounts: users.accountsEnabled(), needsSetup: setup.gateOn(), legacy: !users.accountsEnabled() && isLocked(), user: me });
+      }
+      // ---- first-run setup (see setup.js)
+      if (path === '/setup') return await serveFile(res, join(PUBLIC, 'setup.html'));
+      if (path === '/api/setup/state') {
+        const a = setup.access(req.headers.cookie);
+        return json(res, { open: a.open, via: a.via || null, reason: a.reason || null, message: a.message || null });
+      }
+      if (req.method === 'POST' && path === '/api/setup/create') {
+        const b = await readJson(req);
+        const r = await setup.createFirstAdmin({ name: b.name, email: b.email, token: b.token, cookie: req.headers.cookie, ip: clientIp(req) });
+        if (!r.ok) return json(res, { ok: false, error: r.error }, r.status);
+        return json(res, { ok: true, invite: `/invite.html?t=${r.inviteToken}` });
       }
       if (path === '/api/me') return json(res, { ok: true, user: me, accounts: users.accountsEnabled(), recoveryLeft: me ? users.recoveryLeft(me.id) : null });
 
@@ -567,7 +588,7 @@ export function startServer({ onLog = () => {} } = {}) {
       }
 
       // ---- settings
-      if (path === '/api/settings' && req.method === 'GET') return json(res, { settings: settings.publicView(), baseUrlGuess: `http://${esc.lanAddress()}:${WEB.port}` });
+      if (path === '/api/settings' && req.method === 'GET') return json(res, { settings: settings.publicView(), baseUrlGuess: esc.defaultBaseUrl() });
       if (req.method === 'POST' && path === '/api/settings') {
         const b = await readJson(req);
         const r = settings.update(b);
@@ -611,7 +632,7 @@ export function startServer({ onLog = () => {} } = {}) {
       if (path === '/api/qr') {
         const m = q.get('m') || MACHINES[0].id;
         if (!MACHINES.some(x => x.id === m)) return json(res, { ok: false, error: 'unknown machine' }, 404);
-        const base = settings.all().baseUrl || process.env.DK_BASE_URL || `http://${req.headers.host}`;
+        const base = settings.all().baseUrl || envBaseUrl() || `http://${req.headers.host}`;
         const target = qrLink(m, base);
         const png = await QRCode.toBuffer(target, { width: 640, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0b0e13', light: '#ffffff' } });
         res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store', 'x-qr-target': target });

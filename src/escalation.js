@@ -17,7 +17,7 @@
 // ============================================================
 
 import { randomBytes } from 'node:crypto';
-import { networkInterfaces } from 'node:os';
+import { lanAddress as pickLan, resolveBaseUrl } from './net.js';
 import { MACHINES, WEB } from './config.js';
 import { db } from './db.js';
 import * as settings from './settings.js';
@@ -28,18 +28,17 @@ export function onIssueEvent(fn) { broadcast = fn; }
 
 const nameOf = (id) => MACHINES.find(m => m.id === id)?.name || id;
 
-export function lanAddress() {
-  for (const list of Object.values(networkInterfaces())) {
-    for (const a of list || []) if (a.family === 'IPv4' && !a.internal) return a.address;
-  }
-  return 'localhost';
-}
+export const lanAddress = () => pickLan();
 
-// The address phones and managers use to reach this PC; it goes into
-// every email as the acknowledge link.
-export function baseUrl() {
-  return settings.all().baseUrl || process.env.DK_BASE_URL || `http://${lanAddress()}:${WEB.port}`;
+// The address phones and managers use to reach this PC; it goes into every
+// email, the invite links and the QR codes. Settings, then DK_BASE_URL, then
+// the best network address (see net.js).
+export function baseUrlInfo() {
+  return resolveBaseUrl({ saved: settings.all().baseUrl, port: WEB.port });
 }
+export const baseUrl = () => baseUrlInfo().url;
+// What the Settings screen shows as the blank-field default (no saved value).
+export const defaultBaseUrl = () => resolveBaseUrl({ saved: '', port: WEB.port }).url;
 
 const pad = (n) => String(n).padStart(2, '0');
 const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
