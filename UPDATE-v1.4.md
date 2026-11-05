@@ -38,21 +38,23 @@ It prints the row count of every table before and after and ends with `OK: every
 3. Run `node scripts/upgrade.js --check` (above). It must say OK.
 4. Restart the app (Task Scheduler > Digital Kaizen > End, then Run; or `sudo systemctl restart digital-kaizen`). The upgrade and the backup happen on this start.
 5. Open the dashboard. `node scripts/upgrade.js --backups` lists the backup that was made.
+6. **Make the first admin, if nobody has yet.** If the page still asks for the old shared dashboard password (or opens without asking), there is no account: the dashboard has no personal sign-in until you make one. In the app folder: `npm run admin -- "Your Name" you@evernu.co.za`. It prints a one-time link (works once, 72 hours; if it starts with a wrong address, keep the part from `/invite.html` and use `http://192.120.0.7:4310` in front). Open it and you see, in turn: choose a password (10+ characters); scan a QR code into an authenticator app on a phone; type the 6 digits; save the 10 recovery codes (shown only once). From then on everyone must sign in with email, password and a 6-digit code, and the old shared password stops working at once, with no restart. Add more people on the **People** page (each gets a one-time link); **Reset** there gives a new link to someone who lost their phone. If you already have an admin from 1.3, skip this step. The full walk-through is README Step 6 and the People section.
 
 ### If anything looks wrong: roll back (about 2 minutes)
 
-1. Stop the app.
-2. `node scripts/rollback.js latest`
-3. Start the previous version (`git checkout v1.2.0`, or the old release zip). Your old data is back exactly as it was; anything logged since the upgrade is kept in `data/rolled-back/`.
+1. Stop the app (Task Scheduler > Digital Kaizen > End; or `sudo systemctl stop digital-kaizen`).
+2. `node scripts/rollback.js latest` (it must end with `OK`).
+3. Start the previous version: `git checkout <the version you were on, for example v1.2.0>` and `npm install --omit=dev`, or unzip the old release zip, then restart the app. Your old data is back exactly as it was; anything logged since the upgrade is kept in `data/rolled-back/`. People made on the People page since the upgrade are not in the restored data: make them again.
 
 ## 3. Email and the other settings
 
 Unchanged from 1.3: **Settings > Email** (the factory's own mail server, or a Gmail address with an app password), **Settings > Escalation ladder** (people, levels, minutes; the five Evernu addresses are only a starting example), and the limits, reasons, defect types, moulds and operator names. The full list of every setting, key and credential, where each is kept, how to rotate them, and how to test email without messaging managers is in `UPDATING.md` section 3.
 
-**Nobody is emailed until the mail account is set up.** To rehearse safely: `npm run mail-sink`, point the mail server at `127.0.0.1` port `1025` with Security None, and read what would have been sent at `http://localhost:8025`.
+**Nobody is emailed until the mail account is set up.** To test the account, type your own address in "send a test to this address" and press **Save and send test**: one message to you, nobody else. To rehearse the whole ladder without sending anything, do it on a separate test copy (not the live install): `npm run mail-sink`, point its mail server at `127.0.0.1` port `1025` with Security None, and read what would have been sent at `http://localhost:8025`.
 
 ## 4. First start checklist
 
+- The dashboard asks you to sign in with email, password and a 6-digit code (not the old shared password).
 - Live floor shows both machines as tiles; a stopped machine shows DOWN and, once past the limit, which level has been told.
 - Machines page: the state timeline fills across the shift.
 - Quality and OEE: the 14-day OEE comes from the existing shot history.

@@ -2,6 +2,8 @@
 
 **1.3.1:** the "Call a manager" button and its route are removed from the QR page. Escalations now start only from the automatic limits (machine down too long, too many defects in a shift). Nothing on the phone page can email the ladder.
 
+*This note is kept for history. The current one is `UPDATE-v1.4.md`; the install guide is `README.md`; safe upgrade, backup and rollback are in `UPDATING.md`. Section 2 below (the first admin) still applies if nobody has made one.*
+
 What is new, and how to put it on the factory PC (`192.120.0.7`). Read this top to bottom once.
 
 ## What you get
