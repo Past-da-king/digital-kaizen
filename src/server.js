@@ -308,7 +308,7 @@ export function startServer({ onLog = () => {}, demo = false } = {}) {
         const out = { ok: true, user: r.user };
         if (r.inviteToken) {
           out.inviteLink = `${esc.baseUrl()}/invite.html?t=${r.inviteToken}`;
-          if (b.emailInvite && mail.smtpReady()) {
+          if (b.emailInvite && mail.mailReady()) {
             store.enqueueMail({ kind: 'invite', to: r.user.email, subject: '[Digital Kaizen] Your account', now: new Date(),
               text: `Hello ${r.user.name},\n\nAn account has been made for you on the Digital Kaizen dashboard (${r.user.role}).\nOpen this link within 72 hours to choose a password and set up your authenticator app:\n\n${out.inviteLink}\n` });
             out.emailed = true; mail.processQueue().catch(() => {});
@@ -588,7 +588,7 @@ export function startServer({ onLog = () => {}, demo = false } = {}) {
       }
 
       // ---- settings
-      if (path === '/api/settings' && req.method === 'GET') return json(res, { settings: settings.publicView(), baseUrlGuess: esc.defaultBaseUrl() });
+      if (path === '/api/settings' && req.method === 'GET') return json(res, { settings: settings.publicView(), resend: mail.resendStatus(), baseUrlGuess: esc.defaultBaseUrl() });
       if (req.method === 'POST' && path === '/api/settings') {
         const b = await readJson(req);
         const r = settings.update(b);

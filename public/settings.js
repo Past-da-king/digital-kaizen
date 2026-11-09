@@ -5,12 +5,12 @@
 import { mountHeader, api, postJson, $, $$, esc, toast } from './ui.js';
 
 await mountHeader({ active: '/settings.html', clock: false });
-let S = null, guess = '';
+let S = null, guess = '', resendStatus = { keySet: false, from: '' };
 let people = [];
 
 async function load() {
   const r = await api('/api/settings');
-  S = r.settings; guess = r.baseUrlGuess;
+  S = r.settings; guess = r.baseUrlGuess; resendStatus = r.resend;
   people = (await api('/api/users')).users.filter(u => u.role === 'operator');
   draw();
 }
@@ -33,16 +33,9 @@ function draw() {
     <div class="field"><label>Defects in one shift, one machine, over (number)</label><input type="number" id="dfMax" min="1" value="${S.thresholds.defectsPerShift}"><span class="help">Raised once per machine per shift.</span></div>
   </div></section>
 
-  <section class="card"><div class="card-h"><h2>Email</h2><div class="spacer"></div><span class="part">${S.smtp.host ? '' : '<span class="un">not set up</span>'}</span></div><div class="bd">
-    <p class="note" style="margin:0 0 12px">The factory's own mail server, or a Gmail address with an app password. Mail waits in a queue when the network is down and is sent when it returns.</p>
-    <div class="field" style="margin-bottom:12px"><label>Mail server</label><input id="smHost" placeholder="smtp.gmail.com or your server" value="${esc(S.smtp.host)}"></div>
-    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:12px;margin-bottom:12px">
-      <div class="field"><label>Port</label><input id="smPort" type="number" value="${S.smtp.port}"></div>
-      <div class="field"><label>Security</label><select id="smSec">${[['auto', 'Automatic'], ['starttls', 'STARTTLS (587)'], ['ssl', 'SSL (465)'], ['none', 'None (internal server)']].map(([v, l]) => `<option value="${v}" ${S.smtp.security === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
-    <div class="field" style="margin-bottom:12px"><label>Login (user name)</label><input id="smUser" autocomplete="off" value="${esc(S.smtp.user)}"></div>
-    <div class="field" style="margin-bottom:12px"><label>Password</label><input id="smPass" type="password" autocomplete="new-password" placeholder="${S.smtp.passSet ? 'saved (leave blank to keep)' : ''}"></div>
-    <div class="field" style="margin-bottom:12px"><label>Send from</label><input id="smFrom" placeholder="kaizen@evernu.co.za" value="${esc(S.smtp.from)}"></div>
-    <label class="chip" style="cursor:pointer"><input type="checkbox" id="smSelf" ${S.smtp.allowSelfSigned ? 'checked' : ''}> Accept a self-signed certificate</label>
+  <section class="card"><div class="card-h"><h2>Email</h2></div><div class="bd">
+    <p class="note">${resendStatus.keySet ? 'Sending with Resend, key set in .env' : 'No Resend key in .env. Existing SMTP settings will be used.'}</p>
+    <p class="note">From address in .env: ${esc(resendStatus.from || 'not set')}</p>
     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><input id="testTo" type="email" placeholder="send a test to this address" style="flex:1;min-width:200px"><button class="ghost" id="testBtn">Save and send test</button></div>
     <div id="testOut" class="note" style="margin-top:8px"></div>
   </div></section>
@@ -104,7 +97,6 @@ function readAll() {
     escalationEnabled: $('#escOn').checked,
     ladder: readLadder(),
     thresholds: { downtimeMin: num($('#dtMin').value), defectsPerShift: num($('#dfMax').value) },
-    smtp: { host: $('#smHost').value, port: num($('#smPort').value, 587), security: $('#smSec').value, user: $('#smUser').value, pass: $('#smPass').value, from: $('#smFrom').value, allowSelfSigned: $('#smSelf').checked },
     downtimeReasons: $$('#reasons .rowline').map(r => ({ label: $('input', r).value, planned: $('input[type=checkbox]', r).checked })),
     defectTypes: $$('#dtypes .rowline').map(r => $('input', r).value),
     machines: Object.fromEntries($$('[data-mach]').map(m => [m.dataset.mach, {
@@ -116,7 +108,7 @@ function readAll() {
   };
 }
 
-function keep() { Object.assign(S, readAll(), { smtp: { ...S.smtp, ...readAll().smtp, passSet: S.smtp.passSet } }); }
+function keep() { Object.assign(S, readAll()); }
 
 async function save(extra = {}) {
   const body = readAll();

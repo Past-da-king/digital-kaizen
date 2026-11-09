@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, readd
 import { dirname, join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 
-export const APP_VERSION = '1.4.1';
+export const APP_VERSION = '1.5.0';
 
 const hasTable = (db, t) => Boolean(db.prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?`).get(t));
 const hasColumn = (db, t, c) => db.prepare(`PRAGMA table_info(${t})`).all().some(r => r.name === c);

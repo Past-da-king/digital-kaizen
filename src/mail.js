@@ -16,6 +16,10 @@
 // ============================================================
 
 import nodemailer from 'nodemailer';
+import * as resend from './resend.js';
+const resendConfig = { apiKey: process.env.RESEND_API_KEY || '', from: process.env.DK_MAIL_FROM || '', fromName: process.env.DK_MAIL_FROM_NAME || '' };
+export function mailReady(s = settings.all().smtp) { return resendConfig.apiKey ? resend.resendReady(resendConfig) : smtpReady(s); }
+export function resendStatus() { return { keySet: Boolean(resendConfig.apiKey), from: resendConfig.from }; }
 import { db, iso } from './db.js';
 import * as settings from './settings.js';
 import * as store from './store.js';
@@ -57,9 +61,10 @@ let busy = false;
 export function status() {
   const s = settings.all().smtp;
   return {
-    configured: smtpReady(s),
+    configured: mailReady(s),
+    transport: resendConfig.apiKey ? 'resend' : 'smtp',
     host: s.host ? `${s.host}:${s.port}` : '',
-    from: s.from || s.user || '',
+    from: resendConfig.apiKey ? resendConfig.from : (s.from || s.user || ''),
     counts: store.mailCounts(),
     lastOkAt, lastError,
   };
@@ -68,6 +73,10 @@ export function status() {
 const fromAddress = (s) => s.from || s.user;
 
 export async function sendNow({ to, subject, text, html }, smtp = settings.all().smtp) {
+  if (resendConfig.apiKey) {
+    if (!resendConfig.from) throw new Error('Set DK_MAIL_FROM in .env and restart the service.');
+    return resend.sendMail(resendConfig, { to, subject, text, html });
+  }
   const info = await transportFor(smtp).sendMail({ from: fromAddress(smtp), to, subject, text, html: html || undefined });
   return info.messageId || 'accepted';
 }
@@ -81,7 +90,7 @@ export async function processQueue(now = new Date()) {
     const cfg = settings.all();
     const due = store.dueMail(now);
     if (!due.length) return out;
-    if (!smtpReady(cfg.smtp)) { out.notConfigured = true; out.waiting = due.length; lastError = 'Email is not set up yet (Settings > Email)'; return out; }
+    if (!mailReady(cfg.smtp)) { out.notConfigured = true; out.waiting = due.length; lastError = resendConfig.apiKey ? 'Set DK_MAIL_FROM in .env and restart the service.' : 'Email is not set up yet (Settings > Email)'; return out; }
 
     const retry = cfg.mail.retryMinutes;
     const giveUpMs = cfg.mail.giveUpHours * 3600 * 1000;
@@ -100,7 +109,7 @@ export async function processQueue(now = new Date()) {
         // The server answered and refused this one (bad address, rejected
         // sender): retrying forever will not help, but a few tries cover
         // a greylisting or a busy server.
-        const refused = !NETWORK.test(msg) && m.attempts + 1 >= 5;
+        const refused = !NETWORK.test(msg) && !e.config && !['network', 'throttled', 'server'].includes(e.kind) && m.attempts + 1 >= 5;
         if (tooOld || refused) { store.markMailFailed(m.id, msg); out.failed++; }
         else {
           const wait = retry[Math.min(m.attempts, retry.length - 1)];
@@ -130,7 +139,7 @@ export async function processQueue(now = new Date()) {
 // other message.
 export async function sendTest(to, now = new Date()) {
   const cfg = settings.all();
-  if (!smtpReady(cfg.smtp)) return { ok: false, error: 'Fill in the mail server and a From address first.' };
+  if (!mailReady(cfg.smtp)) return { ok: false, error: resendConfig.apiKey ? 'Set DK_MAIL_FROM in .env and restart the service.' : 'Configure SMTP or add a Resend key and From address in .env.' };
   const text = 'This is a test message from Digital Kaizen. If you are reading it, escalation emails from this PC can reach you.';
   const qid = store.enqueueMail({ kind: 'test', to, subject: '[Digital Kaizen] Test message', text, now });
   const r = await processQueue(now);

@@ -17,7 +17,7 @@ Already installed and updating? Read **UPDATING.md** (safe upgrade, backup, roll
 | **Adds** | One program (Node.js) and one folder. The dashboard is served on port **4310**. |
 | **Stores** | Its own database file in the `data` folder. No MySQL setup is needed. |
 | **Does not touch** | The sensors, the sensor file, Mosquitto, Node-RED, or the MySQL database. Nothing on them changes and nothing is sent to them. |
-| **Internet** | Not needed once it is installed. Everything stays inside the factory network. The only thing that ever leaves is an escalation email, through the mail account you enter. |
+| **Internet** | Not needed once it is installed. Everything stays inside the factory network. The only thing that leaves is an escalation email, through the configured mail transport. |
 
 When it is running, anyone on the factory network opens **http://192.120.0.7:4310** in a browser.
 
@@ -235,16 +235,29 @@ Open http://192.120.0.7:4310 again to confirm it is running and asks you to sign
 
 ## Step 9. Email, the ladder and the QR labels
 
-Sign in as the admin. These are all on the dashboard; nothing needs a restart.
+**Two-step sign-in uses an authenticator app (TOTP). It needs no email and no email keys.**
 
-1. **Settings > Dashboard address.** Type `http://192.120.0.7:4310`. It goes into the QR codes and into the links in every email, so phones can reach the dashboard. Save.
-2. **Settings > Email.** Enter the factory's mail server (or `smtp.gmail.com`, port 587, with a Gmail **app password**, never the normal password), the login and the From address. Type your **own** address in "send a test to this address" and press **Save and send test**. One message goes to you and nobody else. **Nobody is emailed by the ladder until this is set up.**
-3. **Settings > Escalation ladder.** The five Evernu people there are only an **example**: change the names, emails and minutes to the real ones, or add and remove levels. Also set **When it counts as an issue** (minutes a machine may be down, defects in one shift).
-4. **Settings > Moulds and ideal cycle time.** Enter the real ideal cycle time (seconds) and cavities of the mould in each machine, and mark the one that is running. Until then the OEE Performance figure is only indicative.
-5. **Settings > Operators on the QR page.** Add the names people will pick when they log. A PIN per name is optional.
-6. **QR labels** (left menu). Print one label per machine, laminate it and stick it on the machine. Scanning it on a phone opens the page where the operator picks a name and logs a defect or a downtime. No sign-in.
+To send escalation emails through Resend:
 
-Details, every setting and how to test email without messaging the managers are in **UPDATING.md** section 3.
+1. Create a Resend account at https://resend.com. In **Domains > Add domain**, add a subdomain such as `alerts.evernu.co.za`. This keeps the existing Microsoft 365 mail on the main domain separate.
+2. At the domain's DNS host, add the exact records Resend shows: the MX and SPF TXT for its `send` host and the DKIM TXT. Press **Verify** in Resend and wait for sending to be verified. Follow the values and host names shown for your own domain.
+3. In **API Keys > Create**, choose **Sending access** only and copy the key. Restrict it to the domain if offered.
+4. On the server, open `.env` in the app folder with a text editor. Add the following, replacing the examples with your own verified domain and key:
+
+```
+RESEND_API_KEY=re_your_key
+DK_MAIL_FROM=alerts@alerts.evernu.co.za
+DK_MAIL_FROM_NAME=Digital Kaizen
+```
+
+5. Save the file and restart the service from Step 8. On Windows, open Task Scheduler, select **Digital Kaizen**, choose **End**, then **Run**. On Linux run `sudo systemctl restart digital-kaizen`.
+6. Sign in as admin. Open **Settings > Email**, type your own email address under **send a test to this address**, then press **Save and send test**. Only that address receives the test. Check its inbox and the on-screen result.
+7. Under **Settings > Dashboard address**, enter the dashboard address phones can reach. Under **Escalation ladder**, replace the example names and addresses with the real ones and set the issue thresholds.
+8. Set the real **Moulds and ideal cycle time**, add **Operators on the QR page**, then print and laminate a QR label for each machine.
+
+If no Resend key is set, previously configured SMTP remains the fallback. The app queues messages during a network outage and retries them.
+
+Resend's guides: [domain verification](https://resend.com/docs/dashboard/domains/introduction) and [sending-only API keys](https://resend.com/changelog/new-api-key-permissions). Details and safe testing are in **UPDATING.md** section 3.
 
 ---
 
@@ -331,7 +344,10 @@ Most settings are on the **Settings** screen of the dashboard. The file `.env` i
 | `DK_TOPIC_ROOT` | First part of the sensors' topic | `factory-demo-9f7c2a61` |
 | `DK_WEB_PORT` | Port the dashboard is served on | `4310` |
 | `DK_BASE_URL` | Starting value for the dashboard address in emails, invite links and QR codes, for example `http://192.120.0.7:4310` (**Settings > Dashboard address** wins) | this PC's ordinary LAN address (192.168, 10, 172.16 to 31 first; Tailscale 100.x and virtual adapters last) and the port |
-| SMTP (mail) | Set on the **Settings > Email** screen, not in this file. The old `DK_SMTP_*` and `DK_MAIL_FROM` lines are only used as a starting value if nothing is saved on the screen. | off |
+| RESEND_API_KEY | Resend sending-only key, stored in .env | empty |
+| DK_MAIL_FROM | Verified From address for Resend | empty |
+| DK_MAIL_FROM_NAME | Sender display name for Resend | empty |
+| SMTP fallback | Previously saved SMTP settings, or legacy DK_SMTP_* defaults if none saved; used without a Resend key | off |
 
 Escalation people and timings, limits, stop reasons, defect types, moulds and operator names are on the **Settings** screen. Machine names, shift hours and downtime rules are in `src/config.js`.
 
@@ -351,7 +367,7 @@ Then open http://localhost:4310. Things to know:
 - This mode starts its own small MQTT broker on port 1883, so **do not use it on the factory server**, where Mosquitto already has that port. It also writes simulated data into the `data` folder of the folder you run it in, so never run it in the live install folder.
 - **The demo dashboard is open: nobody is asked to sign in** until you make an admin with `npm run admin -- "Your Name" you@example.com`. The demo is the mode with the simulated machines, and /setup is off there. The start-up window says so in plain words. A real install is different: a brand-new one starts closed and needs the setup link (Step 6); an existing one is never closed by an update.
 - It ignores `.env`. To use another port: `DK_WEB_PORT=4311 npm run demo` (Linux), or `$env:DK_WEB_PORT=4311; npm run demo` (PowerShell).
-- To rehearse escalation emails without sending any, run `npm run mail-sink` in a second window (needs the `npm install` above), then point **Settings > Email** at `127.0.0.1`, port `1025`, security None. Read the messages at http://localhost:8025.
+- To rehearse escalation emails without sending any, run `npm run mail-sink` in a second window (needs the `npm install` above), then start a separate test copy with no Resend key and no saved SMTP settings, setting DK_SMTP_HOST=127.0.0.1, DK_SMTP_PORT=1025 and DK_MAIL_FROM=test@factory.example in its environment. Read the messages at http://localhost:8025.
 
 ---
 

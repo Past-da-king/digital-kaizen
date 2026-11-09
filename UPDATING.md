@@ -14,7 +14,7 @@ On the factory PC (`192.120.0.7`), in the app folder (for example `C:\digital-ka
 | Photos | `data/photos/` | Defect photos from the QR page |
 | Dashboard secrets | `data/secrets.json` | Made by `npm run setup`: broker password for the built-in broker, old shared password |
 | Key file | `data/keystore.key` | Seals every 2-step secret and makes each machine's QR token. **Lose it and every authenticator enrolment and every printed QR label stops working.** Back it up |
-| Settings | `.env` (app folder) | Sensor broker address and login, topic, port. Mail is NOT here, it is in the database (Settings screen) |
+| Settings | `.env` (app folder) | Sensor broker settings and, if used, the Resend API key and From address. Legacy SMTP settings are in the database |
 | Backups | `data/backups/<time>-before-v<version>/` | Taken automatically before any upgrade |
 | Rolled-back data | `data/rolled-back/<time>/` | What was in place when a rollback happened |
 | Log | `data/digital-kaizen.log` | Windows scheduled task output (on Linux: `sudo journalctl -u digital-kaizen`) |
@@ -52,18 +52,15 @@ On the factory PC (`192.120.0.7`), in the app folder (for example `C:\digital-ka
 
 **Rule: no secret is ever in code or in git.** Secrets live in the Settings screen (stored in the database) or in `.env` / `data/`, which are not committed.
 
-### Email (escalation mail): Settings > Email
+### Email (escalation mail)
 
-| Field | Meaning |
-|---|---|
-| Mail server, Port, Security | The factory's mail server, or `smtp.gmail.com`, 587, STARTTLS (or 465, SSL). Internal server without encryption: Security = None |
-| Login, Password | The mailbox. For Gmail this is an **app password** (Google Account > Security > 2-Step Verification > App passwords), never the account password |
-| Send from | The From address. Gmail only sends as the account or its aliases |
-| Accept a self-signed certificate | For an internal server with its own certificate |
+Follow README Step 9 to create a Resend account, verify a sending subdomain and add its sending-only API key, From address and display name to `.env`. Restart the Windows scheduled task (Task Scheduler > Digital Kaizen > End, then Run) or Linux service (`sudo systemctl restart digital-kaizen`). **Settings > Email** displays whether the key is set, the From address and the test button; the key is never displayed or stored in SQLite. The key takes precedence over SMTP even if the From address is missing.
 
-Stored in the `settings` table (key `smtp`). The password is never sent back to the browser (the screen shows "saved, leave blank to keep"). Old installs that set `DK_SMTP_HOST`, `DK_SMTP_PORT`, `DK_SMTP_USER`, `DK_SMTP_PASS`, `DK_MAIL_FROM` in `.env` still work: they are used **only** while nothing has been saved on the screen.
+With no Resend key, the previously saved SMTP configuration remains the fallback. On an installation with no saved SMTP settings, legacy `DK_SMTP_HOST`, `DK_SMTP_PORT`, `DK_SMTP_USER`, `DK_SMTP_PASS` and `DK_MAIL_FROM` environment defaults still work. These SMTP values are read at startup; restart after editing `.env`. Existing saved SMTP credentials are retained during the upgrade.
 
-**Rotate the mail password:** make a new app password (or reset the mailbox password) > Settings > Email > type it in the Password box > **Save and send test** > revoke the old one at the provider. Takes effect immediately, no restart.
+A message is queued before sending. Resend 429 and 5xx responses are retried with backoff; the queue also retries outages. A 401 means the key was refused; 403 means access was refused; 422 can mean the sender or message is not allowed. Check the verified domain and From address in Resend. Never paste a key into a support message or log.
+
+Two-step sign-in uses an authenticator app (TOTP) and needs no email or email keys.
 
 ### The escalation ladder: Settings > Escalation ladder
 People, roles, emails and minutes per level, in the database. The five Evernu addresses are only a starting example (`src/starter.js`). **Never edit the addresses in code.**
@@ -75,6 +72,7 @@ Limits (machine down minutes, defects per shift), downtime reasons, defect types
 
 | Key | Meaning |
 |---|---|
+| `RESEND_API_KEY`, `DK_MAIL_FROM`, `DK_MAIL_FROM_NAME` | Resend sending-only key, verified From address and display name; restart after editing |
 | `DK_BROKER_URL`, `DK_BROKER_USER`, `DK_BROKER_PASS` | The sensors' MQTT broker (the factory's Mosquitto) and its login. These are the sensors' credentials, copy from the sensor file |
 | `DK_TOPIC_ROOT` | First part of the sensors' topic |
 | `DK_WEB_PORT` | Dashboard port, default 4310 |
@@ -100,7 +98,7 @@ Limits (machine down minutes, defects per shift), downtime reasons, defect types
 ### How to test email WITHOUT spamming managers
 
 1. **Test the account only:** Settings > Email > type your OWN address in "send a test to" > Save and send test. This sends one message to that address and nothing else. It never touches the ladder.
-2. **Rehearse the whole ladder, sending nothing outside:** on a **separate test copy of the app** (the demo, see README "Try it without a factory"; not the live install, because while the mail server points at the sink, real escalations would be caught there and never reach the managers), run `npm install` (dev packages), `npm run mail-sink`, then set the mail server to `127.0.0.1`, port `1025`, Security None. Read what would have been sent at `http://localhost:8025`.
+2. **Rehearse the whole ladder, sending nothing outside:** on a **separate test copy of the app** (the demo, see README "Try it without a factory"; not the live install, because while the mail server points at the sink, real escalations would be caught there and never reach the managers), run `npm install` (dev packages), `npm run mail-sink`, then remove the Resend key from the test copy and set `DK_SMTP_HOST=127.0.0.1`, `DK_SMTP_PORT=1025`, and `DK_MAIL_FROM=test@factory.example` before starting; use a test copy with no saved SMTP settings. Read what would have been sent at `http://localhost:8025`.
 3. **Rehearse with real delivery but only to yourself:** on a test copy, edit the ladder so every level is your own address, and use the demo's "Stop MA2" or a lowered limit. (Never on the live install, so managers never see a test.)
 4. Switch the whole ladder off with **Escalation emails on** (Settings) when needed; issues are still recorded.
 5. The Escalations page shows every email, its status and the last error.
