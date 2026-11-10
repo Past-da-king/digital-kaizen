@@ -128,7 +128,7 @@ const OPEN_PATHS = new Set([
   '/login.html', '/login.js', '/invite.html', '/invite.js', '/setup', '/setup.html', '/setup.js', '/api/setup/state', '/api/setup/create', '/ack', '/ack.html', '/ack.js',
   '/log.html', '/log.js', '/log.css', '/ui.js', '/attribute.html', '/attribute.js', '/style.css', '/favicon.ico', '/favicon.svg',
   '/api/login', '/api/auth/state', '/api/auth/login', '/api/auth/2fa', '/api/auth/logout',
-  '/api/invite/info', '/api/invite/start', '/api/invite/finish', '/api/ack/info', '/api/ack',
+  '/api/invite/info', '/api/invite/start', '/api/invite/rescan', '/api/invite/finish', '/api/ack/info', '/api/ack',
   // The device HTTP fallback only ACCEPTS readings, it never returns any.
   '/machine-data', '/device-data',
 ]);
@@ -286,6 +286,13 @@ export function startServer({ onLog = () => {}, demo = false } = {}) {
       if (req.method === 'POST' && path === '/api/invite/start') {
         const b = await readJson(req);
         const r = await users.inviteStart(b.t, b.password);
+        if (!r.ok) return json(res, r, 400);
+        const png = await QRCode.toDataURL(r.uri, { width: 240, margin: 1 });
+        return json(res, { ok: true, secret: r.secret, qr: png, email: r.email });
+      }
+      if (req.method === 'POST' && path === '/api/invite/rescan') {
+        const b = await readJson(req);
+        const r = users.inviteRescan(b.t);
         if (!r.ok) return json(res, r, 400);
         const png = await QRCode.toDataURL(r.uri, { width: 240, margin: 1 });
         return json(res, { ok: true, secret: r.secret, qr: png, email: r.email });

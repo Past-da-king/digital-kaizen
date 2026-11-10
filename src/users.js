@@ -228,16 +228,46 @@ export function inviteInfo(token) {
 }
 
 // Step 1 of accepting: choose a password, get the authenticator secret.
-const pendingEnrol = new Map();   // user id -> secret awaiting the first code
+// The secret stays the SAME for this link until the first code is accepted:
+// going back, refreshing, a second tab or a double click all show the key
+// already handed out, so a scan made earlier keeps working. Only "Scan a new
+// code" (inviteRescan) replaces it, and the replaced keys are remembered so a
+// code from an older authenticator entry can be named as such.
+const pendingEnrol = new Map();   // user id -> { tok, secret, old[], hash, at }
+const PENDING_MS = 30 * 60000;
+function pendingFor(info, token) {
+  const tok = sha(String(token));
+  let p = pendingEnrol.get(info.user.id);
+  if (!p || p.tok !== tok || Date.now() - p.at > PENDING_MS) {
+    p = { tok, secret: newSecret(), old: [], hash: null, at: Date.now() };
+    pendingEnrol.set(info.user.id, p);
+  }
+  return p;
+}
 export async function inviteStart(token, password) {
   const info = inviteInfo(token);
   if (!info) return { ok: false, error: 'This link has expired or was already used. Ask an admin for a new one.' };
   const bad = passwordProblem(password, info.user.email);
   if (bad) return { ok: false, error: bad };
-  const secret = newSecret();
-  pendingEnrol.set(info.user.id, { secret, hash: await hashPassword(password), at: Date.now() });
-  return { ok: true, email: info.user.email, name: info.user.name, secret, uri: otpauth(info.user.email, secret) };
+  const p = pendingFor(info, token);   // chosen before the await, so two presses at once share it
+  const hash = await hashPassword(password);
+  if (pendingEnrol.get(info.user.id) === p) { p.hash = hash; p.at = Date.now(); }
+  return { ok: true, email: info.user.email, name: info.user.name, secret: p.secret, uri: otpauth(info.user.email, p.secret) };
 }
+
+// "Scan a new code": a fresh key for the same link, keeping the password.
+export function inviteRescan(token) {
+  const info = inviteInfo(token);
+  if (!info) return { ok: false, error: 'This link has expired or was already used. Ask an admin for a new one.' };
+  const p = pendingEnrol.get(info.user.id);
+  if (!p || !p.hash || p.tok !== sha(String(token)) || Date.now() - p.at > PENDING_MS) return { ok: false, restart: true, error: 'Start again: choose your password first.' };
+  p.old = [p.secret, ...p.old].slice(0, 5);
+  p.secret = newSecret();
+  p.at = Date.now();
+  return { ok: true, email: info.user.email, secret: p.secret, uri: otpauth(info.user.email, p.secret) };
+}
+
+const SCAN_AGAIN = 'delete every Digital Kaizen entry for this email in your authenticator app, press Scan a new code, scan it, and type the code it shows.';
 
 // Step 2: prove the app works by typing the current code. Only then does
 // the account become active, and recovery codes are shown once.
@@ -245,9 +275,16 @@ export function inviteFinish(token, code, ip) {
   const info = inviteInfo(token);
   if (!info) return { ok: false, error: 'This link has expired or was already used.' };
   const p = pendingEnrol.get(info.user.id);
-  if (!p || Date.now() - p.at > 30 * 60000) return { ok: false, error: 'Start again: choose your password first.' };
+  if (!p || !p.hash || p.tok !== sha(String(token)) || Date.now() - p.at > PENDING_MS) {
+    return { ok: false, restart: true, error: 'This setup timed out. Choose your password again, then delete the old Digital Kaizen entry in your authenticator app and scan the new code.' };
+  }
   const step = totpCheck(p.secret, code);
-  if (!step) return { ok: false, error: 'That code did not match. Check the clock on your phone and try the next code.' };
+  if (!step) {
+    if (p.old.some(s => totpCheck(s, code))) {
+      return { ok: false, rescan: true, error: `That code is from an older Digital Kaizen entry, not the code on this screen. To fix it, ${SCAN_AGAIN}` };
+    }
+    return { ok: false, rescan: true, error: `That code did not match. Type the code showing now, not an old one. If it still fails, ${SCAN_AGAIN}` };
+  }
   const rc = makeRecoveryCodes();
   db.prepare(`UPDATE users SET pw_hash=?, totp_secret=?, totp_on=1, totp_last=?, recovery=?, status='active', failed=0, locked_until=NULL WHERE id=?`)
     .run(p.hash, seal(p.secret), step, JSON.stringify(rc.hashes), info.user.id);
