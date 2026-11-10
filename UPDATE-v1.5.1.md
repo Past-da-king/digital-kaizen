@@ -17,7 +17,7 @@ No database migration. No setting changes. Data, `.env` and `data/keystore.key` 
 3. Dry run: `node scripts/upgrade.js --check`. It must end with `OK: every existing row is still there`.
 4. Restart the Windows scheduled task (Task Scheduler > Digital Kaizen > End, then Run) or `sudo systemctl restart digital-kaizen`.
 5. Confirm the version is 1.5.1 (`version` in `package.json`, or the start-up window), sign in, and check the Live floor.
-6. Rollback if needed: stop the app, `node scripts/rollback.js latest`, put back the 1.5.0 code (`git checkout v1.5.0` and `npm ci --omit=dev`, or the 1.5.0 zip), start.
+6. Rollback if needed: stop the app, put back the 1.5.0 code (`git checkout v1.5.0` and `npm ci --omit=dev`, or unzip the 1.5.0 zip over the folder), start. The database needs nothing: 1.5.1 changes no table, so the restart takes no new backup. **Do not run `node scripts/rollback.js latest` for this update**: the newest backup is from an earlier upgrade and would put back older data. Only if the data itself is damaged, stop the app and put back the `data/` folder copied in step 1.
 
 ## After the update: people whose two-step setup failed
 

@@ -41,6 +41,8 @@ On the factory PC (`192.120.0.7`), in the app folder (for example `C:\digital-ka
 
 ### Rollback
 
+**If the update applied no migration** (`upgrade.js --check` said `migrations applied: none`, as for 1.5.1), the restart took no backup and the database is unchanged: roll back the **code only** (step 4 below) and do **not** run `rollback.js latest`, which would put back the backup of an earlier upgrade and with it older data. Use the `data/` copy from section 2 step 2 if the data itself is damaged.
+
 1. **Stop the app** (Task Scheduler > Digital Kaizen > End; or `sudo systemctl stop digital-kaizen`).
 2. `node scripts/upgrade.js --backups` lists the backups, with the version each came from. Then `node scripts/rollback.js latest` (or `node scripts/rollback.js <backup folder name>`).
 3. It moves the current database to `data/rolled-back/<time>/` (nothing is deleted, so work logged since the upgrade is kept), copies the backup into place, and prints the row counts. It must end with `OK`.
