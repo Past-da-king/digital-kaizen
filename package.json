@@ -1,6 +1,6 @@
 {
   "name": "digital-kaizen",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "type": "module",
   "description": "Digital Kaizen: live shot counting, downtime and defect logging by QR, OEE and an escalation ladder for injection-moulding machines. ToF sensor -> MQTT -> database -> dashboard.",

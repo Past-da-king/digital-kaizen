@@ -183,7 +183,7 @@ The command also prints which address it used and why. It prefers this PC's ordi
 Open it in a browser, with the person's phone at hand. You will see four things in turn:
 
 1. **Choose a password.** At least 10 characters, typed twice. A few words together is best. It must not contain the part of the email before the `@`.
-2. **Scan the QR code.** Open the authenticator app on the phone, add an account, and scan the square on the screen. If it cannot scan, type the key printed under it instead.
+2. **Scan the QR code.** Open the authenticator app on the phone, add an account, and scan the square on the screen. If it cannot scan, type the key printed under it instead. Scan it once and do not refresh the page: the key stays the same until the first code is accepted. If the phone already has a Digital Kaizen entry from an earlier try, delete it first. **Scan a new code** under the form makes a fresh key if needed.
 3. **Type the 6 digits** the app now shows, then press **Check and finish**. If it says the code did not match, wait for the next code and try again (and check the phone's clock is set to automatic).
 4. **Save the 10 recovery codes.** They appear **only once**. Press **Print**, or write them down, and keep them somewhere safe. Each code signs the person in one time if the phone is lost. Then press **I have saved them, open the dashboard**.
 
