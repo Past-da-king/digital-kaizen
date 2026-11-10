@@ -20,23 +20,45 @@ function step1() {
     e.preventDefault();
     const err = document.getElementById('err');
     if (document.getElementById('pw').value !== document.getElementById('pw2').value) { err.textContent = 'The two passwords are not the same.'; return; }
-    const r = await postJson('/api/invite/start', { t, password: document.getElementById('pw').value });
-    if (!r.ok) { err.textContent = r.error; return; }
-    step2(r);
+    const btn = e.submitter || document.querySelector('#f button'); btn.disabled = true;
+    try {
+      const r = await postJson('/api/invite/start', { t, password: document.getElementById('pw').value });
+      if (!r.ok) { err.textContent = r.error; return; }
+      step2(r);
+    } finally { btn.disabled = false; }
   };
 }
 
-function step2(r) {
-  box.innerHTML = `${brand}<h1>Two-step sign-in</h1><p>Open an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy), add an account by scanning this code, then type the 6 digits it shows.</p>
+function step2(r, note = '') {
+  box.innerHTML = `${brand}<h1>Two-step sign-in</h1><p>Open an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy), add an account by scanning this code, then type the 6 digits it shows. If you added Digital Kaizen to the app before, delete that old entry first.</p>
     <div style="text-align:center"><img src="${r.qr}" width="220" height="220" alt="QR code for the authenticator app" style="border-radius:12px;background:#fff"></div>
-    <p style="font-size:13px;margin-top:10px">Cannot scan? Type this key in: <b style="font-family:var(--mono);word-break:break-all">${esc(r.secret)}</b></p>
+    <p style="font-size:13px;margin-top:10px">Cannot scan? Type this key in: <b id="key" style="font-family:var(--mono);word-break:break-all">${esc(r.secret)}</b></p>
     <form id="f"><div class="field"><label>6-digit code</label><input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" autofocus></div>
-    <button type="submit">Check and finish</button><div class="err" id="err"></div></form>`;
+    <button type="submit">Check and finish</button><div class="err" id="err">${esc(note)}</div></form>
+    <button id="rescan" class="ghost" type="button" style="margin-top:10px">Scan a new code</button>`;
+  const err = document.getElementById('err');
   document.getElementById('f').onsubmit = async (e) => {
     e.preventDefault();
-    const f = await postJson('/api/invite/finish', { t, code: document.getElementById('code').value });
-    if (!f.ok) { document.getElementById('err').textContent = f.error; return; }
-    step3(f.recoveryCodes);
+    const btn = e.submitter || document.querySelector('#f button'); btn.disabled = true;
+    try {
+      const f = await postJson('/api/invite/finish', { t, code: document.getElementById('code').value });
+      if (!f.ok) {
+        if (f.restart) { step1(); document.getElementById('err').textContent = f.error; return; }
+        err.textContent = f.error; return;
+      }
+      step3(f.recoveryCodes);
+    } finally { btn.disabled = false; }
+  };
+  document.getElementById('rescan').onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      const n = await postJson('/api/invite/rescan', { t });
+      if (!n.ok) {
+        if (n.restart) { step1(); document.getElementById('err').textContent = n.error; return; }
+        err.textContent = n.error; return;
+      }
+      step2(n, 'New code made. Delete the old Digital Kaizen entry in your app, scan this one, then type the code it shows.');
+    } finally { if (e.target.isConnected) e.target.disabled = false; }
   };
 }
 
